@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ATM Machine Interface</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- Main Application Wrapper -->
+  <main class="app-container">
+    <div class="atm-card">
+
+      <!-- ========================================== -->
+      <!-- 1. LOGIN SCREEN -->
+      <!-- ========================================== -->
+      <section id="screen-login" class="screen active" aria-labelledby="login-heading">
+        <div class="card-header text-center">
+          <div class="app-logo" aria-hidden="true">🏧</div>
+          <h1 id="login-heading" class="title">ATM Machine</h1>
+          <p class="subtitle">Secure Banking System</p>
+        </div>
+
+        <form id="form-login" class="atm-form" novalidate>
+          <div class="form-group">
+            <label for="login-user-id">User ID</label>
+            <input 
+              type="text" 
+              id="login-user-id" 
+              name="userId" 
+              class="form-input" 
+              placeholder="e.g. user1" 
+              autocomplete="username" 
+              required
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="login-pin">4-Digit PIN</label>
+            <input 
+              type="password" 
+              id="login-pin" 
+              name="pin" 
+              class="form-input" 
+              placeholder="••••" 
+              maxlength="4" 
+              inputmode="numeric" 
+              pattern="[0-9]{4}" 
+              autocomplete="current-password" 
+              required
+            >
+          </div>
+
+          <div id="login-error" class="message-banner error hidden" role="alert" aria-live="assertive"></div>
+
+          <button type="submit" id="btn-login-submit" class="btn btn-primary btn-block">
+            <span class="btn-text">Sign In</span>
+            <span class="spinner hidden" aria-hidden="true"></span>
+          </button>
+        </form>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- 2. MAIN MENU (Dashboard) -->
+      <!-- ========================================== -->
+      <section id="screen-menu" class="screen" aria-labelledby="menu-heading">
+        <header class="menu-header">
+          <span class="user-greeting">Welcome back,</span>
+          <h2 id="menu-heading" class="user-id-display"><span id="menu-user-id">User</span></h2>
+        </header>
+
+        <!-- Balance Display Card -->
+        <div class="balance-card">
+          <span class="balance-label">Total Available Balance</span>
+          <div class="balance-amount-wrapper">
+            <span id="menu-balance-value" class="balance-value">$0.00</span>
+          </div>
+          <span class="balance-status-tag">
+            <span class="status-indicator" aria-hidden="true"></span> Active Session
+          </span>
+        </div>
+
+        <div id="menu-message" class="message-banner hidden" role="alert" aria-live="polite"></div>
+
+        <!-- 4 Action Grid Buttons -->
+        <div class="actions-grid">
+          <button type="button" id="btn-nav-withdraw" class="action-tile">
+            <div class="action-icon" aria-hidden="true">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="5" width="20" height="14" rx="2"/>
+                <line x1="2" y1="10" x2="22" y2="10"/>
+              </svg>
+            </div>
+            <span class="action-label">Withdraw</span>
+          </button>
+
+          <button type="button" id="btn-nav-deposit" class="action-tile">
+            <div class="action-icon" aria-hidden="true">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+              </svg>
+            </div>
+            <span class="action-label">Deposit</span>
+          </button>
+
+          <button type="button" id="btn-nav-transfer" class="action-tile">
+            <div class="action-icon" aria-hidden="true">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="17 1 21 5 17 9"/>
+                <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+                <polyline points="7 23 3 19 7 15"/>
+                <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+              </svg>
+            </div>
+            <span class="action-label">Transfer</span>
+          </button>
+
+          <button type="button" id="btn-nav-history" class="action-tile">
+            <div class="action-icon" aria-hidden="true">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+            </div>
+            <span class="action-label">History</span>
+          </button>
+        </div>
+
+        <!-- Quit / Logout Button -->
+        <button type="button" id="btn-logout" class="btn btn-danger btn-block mt-4">
+          <span class="btn-text">Quit / Logout</span>
+          <span class="spinner hidden" aria-hidden="true"></span>
+        </button>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- 3. WITHDRAW SCREEN -->
+      <!-- ========================================== -->
+      <section id="screen-withdraw" class="screen" aria-labelledby="withdraw-heading">
+        <div class="card-header">
+          <h2 id="withdraw-heading" class="title">Withdraw Cash</h2>
+          <p class="subtitle">Select or enter the amount to withdraw</p>
+        </div>
+
+        <div class="account-pill">
+          <span>Current Balance:</span>
+          <strong id="withdraw-current-balance" class="pill-amount">$0.00</strong>
+        </div>
+
+        <form id="form-withdraw" class="atm-form" novalidate>
+          <div class="quick-amounts-label">Quick Amounts</div>
+          <div class="quick-amounts-grid" role="group" aria-label="Preset withdrawal amounts">
+            <button type="button" class="btn-quick-amount" data-amount="20">$20</button>
+            <button type="button" class="btn-quick-amount" data-amount="50">$50</button>
+            <button type="button" class="btn-quick-amount" data-amount="100">$100</button>
+            <button type="button" class="btn-quick-amount" data-amount="200">$200</button>
+          </div>
+
+          <div class="form-group mt-3">
+            <label for="withdraw-amount">Custom Amount ($)</label>
+            <input 
+              type="number" 
+              id="withdraw-amount" 
+              name="amount" 
+              class="form-input" 
+              placeholder="0.00" 
+              min="1" 
+              step="0.01" 
+              required
+            >
+          </div>
+
+          <div id="withdraw-error" class="message-banner error hidden" role="alert" aria-live="polite"></div>
+
+          <div class="button-stack">
+            <button type="submit" id="btn-withdraw-submit" class="btn btn-primary btn-block">
+              <span class="btn-text">Confirm Withdrawal</span>
+              <span class="spinner hidden" aria-hidden="true"></span>
+            </button>
+            <button type="button" class="btn btn-secondary btn-block btn-back">
+              ← Back to Menu
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- 4. DEPOSIT SCREEN -->
+      <!-- ========================================== -->
+      <section id="screen-deposit" class="screen" aria-labelledby="deposit-heading">
+        <div class="card-header">
+          <h2 id="deposit-heading" class="title">Deposit Funds</h2>
+          <p class="subtitle">Deposit money directly into your account</p>
+        </div>
+
+        <div class="account-pill">
+          <span>Current Balance:</span>
+          <strong id="deposit-current-balance" class="pill-amount">$0.00</strong>
+        </div>
+
+        <form id="form-deposit" class="atm-form" novalidate>
+          <div class="form-group">
+            <label for="deposit-amount">Deposit Amount ($)</label>
+            <input 
+              type="number" 
+              id="deposit-amount" 
+              name="amount" 
+              class="form-input" 
+              placeholder="0.00" 
+              min="1" 
+              step="0.01" 
+              required
+            >
+          </div>
+
+          <div id="deposit-error" class="message-banner error hidden" role="alert" aria-live="polite"></div>
+
+          <div class="button-stack">
+            <button type="submit" id="btn-deposit-submit" class="btn btn-primary btn-block">
+              <span class="btn-text">Confirm Deposit</span>
+              <span class="spinner hidden" aria-hidden="true"></span>
+            </button>
+            <button type="button" class="btn btn-secondary btn-block btn-back">
+              ← Back to Menu
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- 5. TRANSFER SCREEN -->
+      <!-- ========================================== -->
+      <section id="screen-transfer" class="screen" aria-labelledby="transfer-heading">
+        <div class="card-header">
+          <h2 id="transfer-heading" class="title">Transfer Funds</h2>
+          <p class="subtitle">Send money instantly to another account</p>
+        </div>
+
+        <div class="account-pill">
+          <span>Current Balance:</span>
+          <strong id="transfer-current-balance" class="pill-amount">$0.00</strong>
+        </div>
+
+        <form id="form-transfer" class="atm-form" novalidate>
+          <div class="form-group">
+            <label for="transfer-recipient">Recipient User ID</label>
+            <input 
+              type="text" 
+              id="transfer-recipient" 
+              name="toUser" 
+              class="form-input" 
+              placeholder="e.g. user2" 
+              required
+            >
+            <small id="transfer-self-warning" class="input-hint text-warning hidden">
+              ⚠️ You cannot transfer funds to yourself.
+            </small>
+          </div>
+
+          <div class="form-group">
+            <label for="transfer-amount">Amount ($)</label>
+            <input 
+              type="number" 
+              id="transfer-amount" 
+              name="amount" 
+              class="form-input" 
+              placeholder="0.00" 
+              min="1" 
+              step="0.01" 
+              required
+            >
+          </div>
+
+          <div id="transfer-error" class="message-banner error hidden" role="alert" aria-live="polite"></div>
+
+          <div class="button-stack">
+            <button type="submit" id="btn-transfer-submit" class="btn btn-primary btn-block">
+              <span class="btn-text">Confirm Transfer</span>
+              <span class="spinner hidden" aria-hidden="true"></span>
+            </button>
+            <button type="button" class="btn btn-secondary btn-block btn-back">
+              ← Back to Menu
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- 6. TRANSACTION HISTORY SCREEN -->
+      <!-- ========================================== -->
+      <section id="screen-history" class="screen" aria-labelledby="history-heading">
+        <div class="card-header">
+          <h2 id="history-heading" class="title">Transaction History</h2>
+          <p class="subtitle">Recent activity for this account</p>
+        </div>
+
+        <div class="account-pill">
+          <span>Current Balance:</span>
+          <strong id="history-current-balance" class="pill-amount">$0.00</strong>
+        </div>
+
+        <!-- History scrollable list container -->
+        <div class="history-container">
+          <div id="history-loading" class="history-loading hidden">
+            <span class="spinner spinner-large" aria-hidden="true"></span>
+            <p>Loading transactions...</p>
+          </div>
+
+          <div id="history-empty" class="history-empty hidden">
+            <div class="empty-icon" aria-hidden="true">📑</div>
+            <p>No transactions in this session.</p>
+          </div>
+
+          <ul id="history-list" class="history-list" role="list">
+            <!-- Dynamic transaction rows injected by JavaScript -->
+          </ul>
+        </div>
+
+        <div class="button-stack mt-4">
+          <button type="button" class="btn btn-secondary btn-block btn-back">
+            ← Back to Menu
+          </button>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
