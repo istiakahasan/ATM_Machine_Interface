@@ -8,17 +8,13 @@ import java.util.Scanner;
  * menu navigation, withdrawals, deposits, transfers, and session transaction logging.
  */
 public class ATM {
-    // Fields
+    private static final int MAX_ATTEMPTS = 3;
+
     private final Bank bank;
     private final Scanner scanner;
     private Account currentAccount;
     private final ArrayList<Transaction> currentSessionHistory;
 
-    /**
-     * Constructs an ATM interface tied to a Bank instance.
-     *
-     * @param bank The bank providing account repository and transfer services
-     */
     public ATM(Bank bank) {
         this.bank = bank;
         this.scanner = new Scanner(System.in);
@@ -26,261 +22,243 @@ public class ATM {
         this.currentAccount = null;
     }
 
-    /**
-     * Initiates the ATM interaction loop with a 3-attempt lockout mechanism.
-     */
     public void start() {
-        System.out.println("==================================================");
-        System.out.println("          WELCOME TO THE CONSOLE ATM              ");
-        System.out.println("==================================================");
+        print("==================================================");
+        print("          WELCOME TO THE CONSOLE ATM              ");
+        print("==================================================");
 
         int attempts = 0;
-        final int MAX_ATTEMPTS = 3;
-
         while (attempts < MAX_ATTEMPTS) {
-            System.out.print("\nEnter User ID: ");
-            String userId = scanner.nextLine().trim();
-
-            System.out.print("Enter PIN: ");
-            String pin = scanner.nextLine().trim();
-
-            Account account = bank.findAccount(userId);
-
-            if (account != null && account.validatePin(pin)) {
-                System.out.println("\nLogin successful! Welcome, " + account.getUserId() + ".");
-                this.currentAccount = account;
-                this.currentSessionHistory.clear();
-                showMenu();
+            if (tryAuthenticate()) {
                 return;
-            } else {
-                attempts++;
-                int remaining = MAX_ATTEMPTS - attempts;
-                if (remaining > 0) {
-                    System.out.println("Invalid User ID or PIN. Attempts remaining: " + remaining);
-                } else {
-                    System.out.println("\n[ACCESS DENIED] 3 incorrect attempts. Access locked. Exiting program...");
-                    return;
-                }
             }
+            attempts++;
+            notifyFailedAttempt(attempts);
         }
     }
 
-    /**
-     * Displays the primary menu and processes user actions via switch-case.
-     * Hardened to re-prompt on blank input and print "Invalid choice." for invalid inputs.
-     */
+    private boolean tryAuthenticate() {
+        System.out.print("\nEnter User ID: ");
+        String userId = scanner.nextLine().trim();
+
+        System.out.print("Enter PIN: ");
+        String pin = scanner.nextLine().trim();
+
+        Account account = bank.findAccount(userId);
+        if (account != null && account.validatePin(pin)) {
+            print("\nLogin successful! Welcome, " + account.getUserId() + ".");
+            this.currentAccount = account;
+            this.currentSessionHistory.clear();
+            showMenu();
+            return true;
+        }
+        return false;
+    }
+
+    private void notifyFailedAttempt(int attempts) {
+        int remainingAttempts = MAX_ATTEMPTS - attempts;
+        if (remainingAttempts > 0) {
+            print("Invalid User ID or PIN. Attempts remaining: " + remainingAttempts);
+        } else {
+            print("\n[ACCESS DENIED] 3 incorrect attempts. Access locked. Exiting program...");
+        }
+    }
+
     public void showMenu() {
         boolean sessionActive = true;
-
         while (sessionActive) {
-            System.out.println("\n==================================================");
-            System.out.println("                    MAIN MENU                     ");
-            System.out.println("==================================================");
-            System.out.println("1. Transaction History");
-            System.out.println("2. Withdraw");
-            System.out.println("3. Deposit");
-            System.out.println("4. Transfer");
-            System.out.println("5. Quit");
-            System.out.println("==================================================");
-            System.out.print("Please enter your choice (1-5): ");
-
+            displayMenuBanner();
             String input = scanner.nextLine().trim();
             if (input.isEmpty()) {
-                continue; // Re-prompt on blank input
-            }
-
-            int choice;
-            try {
-                choice = Integer.parseInt(input);
-            } catch (NumberFormatException e) {
-                System.out.println("Invalid choice.");
                 continue;
             }
+            sessionActive = processMenuChoice(input);
+        }
+    }
 
+    private void displayMenuBanner() {
+        print("\n==================================================");
+        print("                    MAIN MENU                     ");
+        print("==================================================");
+        print("1. Transaction History");
+        print("2. Withdraw");
+        print("3. Deposit");
+        print("4. Transfer");
+        print("5. Quit");
+        print("==================================================");
+        System.out.print("Please enter your choice (1-5): ");
+    }
+
+    private boolean processMenuChoice(String input) {
+        try {
+            int choice = Integer.parseInt(input);
             switch (choice) {
                 case 1:
                     showHistory();
-                    break;
+                    return true;
                 case 2:
                     withdraw();
-                    break;
+                    return true;
                 case 3:
                     deposit();
-                    break;
+                    return true;
                 case 4:
                     transfer();
-                    break;
+                    return true;
                 case 5:
-                    System.out.println("\nThank you for choosing our ATM. Goodbye!");
-                    sessionActive = false;
-                    break;
+                    print("\nThank you for choosing our ATM. Goodbye!");
+                    return false;
                 default:
-                    System.out.println("Invalid choice.");
-                    break;
+                    print("Invalid choice.");
+                    return true;
             }
+        } catch (NumberFormatException e) {
+            print("Invalid choice.");
+            return true;
         }
     }
 
-    /**
-     * Handles cash withdrawal with balance check and session logging.
-     * Enforces the exact phrase "Insufficient Funds" when balance is exceeded.
-     */
     public void withdraw() {
-        System.out.println("\n--- WITHDRAW CASH ---");
-        System.out.printf("Current Balance: $%.2f%n", currentAccount.getBalance());
+        print("\n--- WITHDRAW CASH ---");
+        printf("Current Balance: $%.2f%n", currentAccount.getBalance());
 
         double amount = readValidAmount("Enter amount to withdraw: $");
-
-        // Rule: Check balance BEFORE withdrawal and display EXACT phrase
         if (currentAccount.getBalance() < amount) {
-            System.out.println("Insufficient Funds");
+            print("Insufficient Funds");
             return;
         }
 
-        boolean success = currentAccount.debit(amount);
-        if (success) {
+        if (currentAccount.debit(amount)) {
             bank.save();
-            Transaction tx = new Transaction("WITHDRAW", amount,
-                    String.format("Cash withdrawal. New balance: $%.2f", currentAccount.getBalance()));
-            currentSessionHistory.add(tx);
-            System.out.printf("Withdrawal successful! Dispensed: $%.2f%n", amount);
-            System.out.printf("Updated Balance: $%.2f%n", currentAccount.getBalance());
+            recordTransaction("WITHDRAW", amount, String.format("Cash withdrawal. New balance: $%.2f", currentAccount.getBalance()));
+            printf("Withdrawal successful! Dispensed: $%.2f%n", amount);
+            printf("Updated Balance: $%.2f%n", currentAccount.getBalance());
         } else {
-            System.out.println("Insufficient Funds");
+            print("Insufficient Funds");
         }
     }
 
-    /**
-     * Handles cash deposit and session logging.
-     */
     public void deposit() {
-        System.out.println("\n--- DEPOSIT CASH ---");
-        System.out.printf("Current Balance: $%.2f%n", currentAccount.getBalance());
+        print("\n--- DEPOSIT CASH ---");
+        printf("Current Balance: $%.2f%n", currentAccount.getBalance());
 
         double amount = readValidAmount("Enter amount to deposit: $");
-
-        boolean success = currentAccount.credit(amount);
-        if (success) {
+        if (currentAccount.credit(amount)) {
             bank.save();
-            Transaction tx = new Transaction("DEPOSIT", amount,
-                    String.format("Cash deposit. New balance: $%.2f", currentAccount.getBalance()));
-            currentSessionHistory.add(tx);
-            System.out.printf("Deposit successful! Deposited: $%.2f%n", amount);
-            System.out.printf("Updated Balance: $%.2f%n", currentAccount.getBalance());
+            recordTransaction("DEPOSIT", amount, String.format("Cash deposit. New balance: $%.2f", currentAccount.getBalance()));
+            printf("Deposit successful! Deposited: $%.2f%n", amount);
+            printf("Updated Balance: $%.2f%n", currentAccount.getBalance());
         } else {
-            System.out.println("Error: Deposit failed. Amount must be positive.");
+            print("Error: Deposit failed. Amount must be positive.");
         }
     }
 
-    /**
-     * Handles funds transfer with recipient lookup, balance check, and session logging.
-     * Enforces the exact phrase "Insufficient Funds" if balance is exceeded.
-     */
     public void transfer() {
-        System.out.println("\n--- TRANSFER FUNDS ---");
-        System.out.printf("Current Balance: $%.2f%n", currentAccount.getBalance());
+        print("\n--- TRANSFER FUNDS ---");
+        printf("Current Balance: $%.2f%n", currentAccount.getBalance());
 
-        System.out.print("Enter recipient User ID: ");
-        String recipientId = scanner.nextLine().trim();
-
-        if (recipientId.isEmpty()) {
-            System.out.println("Error: Recipient User ID cannot be blank.");
-            return;
-        }
-
-        if (recipientId.equalsIgnoreCase(currentAccount.getUserId())) {
-            System.out.println("Error: You cannot transfer funds to yourself.");
-            return;
-        }
-
-        Account recipientAccount = bank.findAccount(recipientId);
+        Account recipientAccount = resolveRecipient();
         if (recipientAccount == null) {
-            System.out.println("Error: Recipient account not found.");
             return;
         }
 
         double amount = readValidAmount("Enter amount to transfer: $");
-
-        // Rule: Check balance BEFORE transfer and display EXACT phrase
         if (currentAccount.getBalance() < amount) {
-            System.out.println("Insufficient Funds");
+            print("Insufficient Funds");
             return;
         }
 
-        boolean success = bank.transfer(currentAccount, recipientAccount, amount);
-        if (success) {
-            Transaction tx = new Transaction("TRANSFER", amount,
-                    String.format("Transferred to %s. New balance: $%.2f", recipientAccount.getUserId(), currentAccount.getBalance()));
-            currentSessionHistory.add(tx);
-            System.out.printf("Transfer successful! Sent $%.2f to %s.%n", amount, recipientAccount.getUserId());
-            System.out.printf("Updated Balance: $%.2f%n", currentAccount.getBalance());
+        if (bank.transfer(currentAccount, recipientAccount, amount)) {
+            recordTransaction("TRANSFER", amount, String.format("Transferred to %s. New balance: $%.2f", recipientAccount.getUserId(), currentAccount.getBalance()));
+            printf("Transfer successful! Sent $%.2f to %s.%n", amount, recipientAccount.getUserId());
+            printf("Updated Balance: $%.2f%n", currentAccount.getBalance());
         } else {
-            System.out.println("Insufficient Funds");
+            print("Insufficient Funds");
         }
     }
 
-    /**
-     * Displays the formatted transaction history for the current session.
-     * Renders a clean tabular layout with columns: # | Type | Amount | Details | Time.
-     * If empty, prints "No transactions in this session."
-     */
+    private Account resolveRecipient() {
+        System.out.print("Enter recipient User ID: ");
+        String recipientId = scanner.nextLine().trim();
+
+        if (recipientId.isEmpty()) {
+            print("Error: Recipient User ID cannot be blank.");
+            return null;
+        }
+        if (recipientId.equalsIgnoreCase(currentAccount.getUserId())) {
+            print("Error: You cannot transfer funds to yourself.");
+            return null;
+        }
+
+        Account recipientAccount = bank.findAccount(recipientId);
+        if (recipientAccount == null) {
+            print("Error: Recipient account not found.");
+        }
+        return recipientAccount;
+    }
+
     public void showHistory() {
-        System.out.println("\n========================================================================================================");
-        System.out.println("                                  CURRENT SESSION TRANSACTION HISTORY                                   ");
-        System.out.println("========================================================================================================");
-        System.out.println("User ID: " + currentAccount.getUserId());
-        System.out.printf("Current Available Balance: $%.2f%n", currentAccount.getBalance());
-        System.out.println("--------------------------------------------------------------------------------------------------------");
+        print("\n========================================================================================================");
+        print("                                  CURRENT SESSION TRANSACTION HISTORY                                   ");
+        print("========================================================================================================");
+        print("User ID: " + currentAccount.getUserId());
+        printf("Current Available Balance: $%.2f%n", currentAccount.getBalance());
+        print("--------------------------------------------------------------------------------------------------------");
 
         if (currentSessionHistory.isEmpty()) {
-            System.out.println("No transactions in this session.");
+            print("No transactions in this session.");
         } else {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-            System.out.printf("%-3s | %-8s | %-12s | %-45s | %-19s%n", "#", "Type", "Amount", "Details", "Time");
-            System.out.println("----+----------+--------------+-----------------------------------------------+--------------------");
-
-            for (int i = 0; i < currentSessionHistory.size(); i++) {
-                Transaction tx = currentSessionHistory.get(i);
-                System.out.printf("%-3d | %-8s | $%-11.2f | %-45s | %-19s%n",
-                        (i + 1),
-                        tx.getType(),
-                        tx.getAmount(),
-                        tx.getDetails(),
-                        tx.getTimestamp().format(formatter));
-            }
+            renderHistoryTable();
         }
-        System.out.println("========================================================================================================");
+        print("========================================================================================================");
     }
 
-    /**
-     * Hardened helper method to safely read and validate positive numeric currency inputs.
-     * - If user enters a non-numeric amount -> prints "Invalid amount. Try again." and re-prompts
-     * - If user enters a negative or zero amount -> rejects with "Amount must be positive."
-     * - If user enters blank input -> re-prompts
-     * - Never crashes or throws uncaught exceptions.
-     */
+    private void renderHistoryTable() {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        printf("%-3s | %-8s | %-12s | %-45s | %-19s%n", "#", "Type", "Amount", "Details", "Time");
+        print("----+----------+--------------+-----------------------------------------------+--------------------");
+
+        for (int i = 0; i < currentSessionHistory.size(); i++) {
+            Transaction transaction = currentSessionHistory.get(i);
+            printf("%-3d | %-8s | $%-11.2f | %-45s | %-19s%n",
+                    (i + 1),
+                    transaction.getType(),
+                    transaction.getAmount(),
+                    transaction.getDetails(),
+                    transaction.getTimestamp().format(formatter));
+        }
+    }
+
     private double readValidAmount(String prompt) {
         while (true) {
             System.out.print(prompt);
             String line = scanner.nextLine().trim();
-
             if (line.isEmpty()) {
-                continue; // Re-prompt on blank input
+                continue;
             }
-
             try {
                 double amount = Double.parseDouble(line);
-
                 if (amount <= 0.0) {
-                    System.out.println("Amount must be positive.");
+                    print("Amount must be positive.");
                     continue;
                 }
-
                 return amount;
             } catch (NumberFormatException e) {
-                System.out.println("Invalid amount. Try again.");
+                print("Invalid amount. Try again.");
             }
         }
+    }
+
+    private void recordTransaction(String type, double amount, String details) {
+        currentSessionHistory.add(new Transaction(type, amount, details));
+    }
+
+    private void print(String message) {
+        System.out.println(message);
+    }
+
+    private void printf(String format, Object... args) {
+        System.out.printf(format, args);
     }
 
     public Account getCurrentAccount() {
