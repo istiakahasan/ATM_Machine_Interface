@@ -4,21 +4,20 @@ import java.util.Scanner;
 
 /**
  * File: ATM.java
- * Responsibility: Manages user interface interactions, console input/output,
- * authentication control, and coordinates banking transactions for the current
- * session.
+ * Responsibility: Manages user interface interactions, console authentication,
+ * menu navigation, withdrawals, deposits, transfers, and session transaction logging.
  */
 public class ATM {
-    // Member fields
+    // Fields
     private final Bank bank;
     private final Scanner scanner;
     private Account currentAccount;
     private final ArrayList<Transaction> currentSessionHistory;
 
     /**
-     * Constructs an ATM interface tied to a specific Bank instance.
+     * Constructs an ATM interface tied to a Bank instance.
      *
-     * @param bank The banking repository and operations provider
+     * @param bank The bank providing account repository and transfer services
      */
     public ATM(Bank bank) {
         this.bank = bank;
@@ -27,21 +26,8 @@ public class ATM {
         this.currentAccount = null;
     }
 
-    public Account getCurrentAccount() {
-        return currentAccount;
-    }
-
-    public ArrayList<Transaction> getCurrentSessionHistory() {
-        return currentSessionHistory;
-    }
-
-    public Bank getBank() {
-        return bank;
-    }
-
     /**
-     * Initiates the ATM interaction loop.
-     * Enforces authentication with a 3-attempt lockout mechanism.
+     * Initiates the ATM interaction loop with a 3-attempt lockout mechanism.
      */
     public void start() {
         System.out.println("==================================================");
@@ -61,9 +47,9 @@ public class ATM {
             Account account = bank.findAccount(userId);
 
             if (account != null && account.validatePin(pin)) {
-                System.out.println("\nAuthentication Successful! Welcome, " + account.getUserId() + ".");
+                System.out.println("\nAuthentication Successful! Welcome, " + account.getUserId() + ". Login successful");
                 this.currentAccount = account;
-                this.currentSessionHistory.clear(); // Reset session history on successful login
+                this.currentSessionHistory.clear();
                 showMenu();
                 return;
             } else {
@@ -81,6 +67,7 @@ public class ATM {
 
     /**
      * Displays the primary menu and processes user actions via switch-case.
+     * Quit option (choice 5) prints goodbye message and exits the loop cleanly.
      */
     public void showMenu() {
         boolean sessionActive = true;
@@ -133,6 +120,7 @@ public class ATM {
 
     /**
      * Handles cash withdrawal with balance check and session logging.
+     * Enforces the exact phrase "Insufficient Funds" when balance is exceeded.
      */
     public void withdraw() {
         System.out.println("\n--- WITHDRAW CASH ---");
@@ -140,7 +128,7 @@ public class ATM {
 
         double amount = readValidAmount("Enter amount to withdraw: $");
 
-        // Rule 4 & 5: Check balance BEFORE withdrawal and display EXACT phrase
+        // Rule: Check balance BEFORE withdrawal and display EXACT phrase
         if (currentAccount.getBalance() < amount) {
             System.out.println("Insufficient Funds");
             return;
@@ -148,7 +136,6 @@ public class ATM {
 
         boolean success = currentAccount.debit(amount);
         if (success) {
-            bank.save(); // Persistence: rewrite accounts.txt after debit
             Transaction tx = new Transaction("WITHDRAW", amount,
                     String.format("Cash withdrawal. New balance: $%.2f", currentAccount.getBalance()));
             currentSessionHistory.add(tx);
@@ -170,7 +157,6 @@ public class ATM {
 
         boolean success = currentAccount.credit(amount);
         if (success) {
-            bank.save(); // Persistence: rewrite accounts.txt after credit
             Transaction tx = new Transaction("DEPOSIT", amount,
                     String.format("Cash deposit. New balance: $%.2f", currentAccount.getBalance()));
             currentSessionHistory.add(tx);
@@ -182,8 +168,8 @@ public class ATM {
     }
 
     /**
-     * Handles funds transfer to another account with balance and recipient
-     * validation.
+     * Handles funds transfer with recipient lookup, balance check, and session logging.
+     * Enforces the exact phrase "Insufficient Funds" if balance is exceeded.
      */
     public void transfer() {
         System.out.println("\n--- TRANSFER FUNDS ---");
@@ -210,7 +196,7 @@ public class ATM {
 
         double amount = readValidAmount("Enter amount to transfer: $");
 
-        // Rule 4 & 5: Check balance BEFORE transfer and display EXACT phrase
+        // Rule: Check balance BEFORE transfer and display EXACT phrase
         if (currentAccount.getBalance() < amount) {
             System.out.println("Insufficient Funds");
             return;
@@ -219,8 +205,7 @@ public class ATM {
         boolean success = bank.transfer(currentAccount, recipientAccount, amount);
         if (success) {
             Transaction tx = new Transaction("TRANSFER", amount,
-                    String.format("Transferred to %s. New balance: $%.2f", recipientAccount.getUserId(),
-                            currentAccount.getBalance()));
+                    String.format("Transferred to %s. New balance: $%.2f", recipientAccount.getUserId(), currentAccount.getBalance()));
             currentSessionHistory.add(tx);
             System.out.printf("Transfer successful! Sent $%.2f to %s.%n", amount, recipientAccount.getUserId());
             System.out.printf("Updated Balance: $%.2f%n", currentAccount.getBalance());
@@ -232,7 +217,7 @@ public class ATM {
     /**
      * Displays the formatted transaction history for the current session.
      * Renders a clean tabular layout with columns: # | Type | Amount | Details | Time.
-     * If no transactions exist, prints "No transactions in this session."
+     * If empty, prints "No transactions in this session."
      */
     public void showHistory() {
         System.out.println("\n========================================================================================================");
@@ -263,12 +248,8 @@ public class ATM {
     }
 
     /**
-     * Safely reads and validates numeric currency inputs from the console.
-     * Explicitly rejects non-numeric inputs, negative amounts, zero amounts,
-     * and blank strings with user-friendly messages without crashing.
-     *
-     * @param prompt The prompt to display to the user
-     * @return A valid strictly positive double value (> 0.0)
+     * Helper method to safely read and validate positive numeric currency inputs.
+     * Rejects non-numeric, zero, negative, and blank inputs with helpful messages.
      */
     private double readValidAmount(String prompt) {
         while (true) {
@@ -296,5 +277,17 @@ public class ATM {
                 System.out.println("Error: Invalid numeric input. Please enter a valid number (e.g., 50.00).");
             }
         }
+    }
+
+    public Account getCurrentAccount() {
+        return currentAccount;
+    }
+
+    public ArrayList<Transaction> getCurrentSessionHistory() {
+        return currentSessionHistory;
+    }
+
+    public Bank getBank() {
+        return bank;
     }
 }

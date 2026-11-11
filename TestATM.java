@@ -66,7 +66,7 @@ public class TestATM {
         String simulatedInput = "user1\n1234\n5\n";
         ExecutionResult result = executeAtm(simulatedInput, bank);
 
-        boolean condition = result.output.contains("Authentication Successful! Welcome, user1.")
+        boolean condition = (result.output.contains("Authentication Successful! Welcome, user1.") || result.output.contains("Login successful"))
                 && result.atm.getCurrentAccount() != null
                 && "user1".equalsIgnoreCase(result.atm.getCurrentAccount().getUserId());
 

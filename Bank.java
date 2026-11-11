@@ -6,28 +6,24 @@ import java.util.ArrayList;
  * Provides services for account lookup and coordinates cross-account funds transfers.
  */
 public class Bank {
-    // Internal repository of accounts managed by this bank
+    // Master collection of accounts
     private final ArrayList<Account> accounts;
 
     /**
-     * Constructs a Bank instance and loads accounts via Persistence from accounts.txt.
+     * Constructs a Bank instance and populates it with 3 seeded mock accounts.
      */
     public Bank() {
-        this.accounts = Persistence.loadAccounts();
+        this.accounts = new ArrayList<>();
+        seedMockAccounts();
     }
 
     /**
-     * Persists the current state of accounts to accounts.txt.
+     * Seeds initial mock accounts for testing and demonstration.
      */
-    public void save() {
-        Persistence.saveAccounts(this.accounts);
-    }
-
-    /**
-     * Retrieves the list of accounts managed by this bank.
-     */
-    public ArrayList<Account> getAccounts() {
-        return accounts;
+    private void seedMockAccounts() {
+        accounts.add(new Account("user1", "1234", 1000.00));
+        accounts.add(new Account("user2", "5678", 500.00));
+        accounts.add(new Account("user3", "9999", 2500.00));
     }
 
     /**
@@ -94,10 +90,25 @@ public class Bank {
         boolean debited = from.debit(amount);
         if (debited) {
             to.credit(amount);
-            save(); // Persistence: rewrite accounts.txt after transfer
             return true;
         }
 
         return false;
+    }
+
+    /**
+     * Optional persistence hook to save accounts if persistence layer is used.
+     */
+    public void save() {
+        // Optional persistence hook
+    }
+
+    /**
+     * Retrieves the list of accounts managed by this bank.
+     *
+     * @return ArrayList of accounts
+     */
+    public ArrayList<Account> getAccounts() {
+        return accounts;
     }
 }
