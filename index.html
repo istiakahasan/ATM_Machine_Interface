@@ -11,17 +11,20 @@
 </head>
 <body>
 
-  <!-- Toast Notification Container -->
-  <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+  <!-- Accessible Skip Link for Keyboard Users -->
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <!-- Toast Notification Live Region -->
+  <div id="toast-container" class="toast-container" role="region" aria-label="Notifications" aria-live="polite" aria-atomic="true"></div>
 
   <!-- Main Application Wrapper -->
-  <main class="app-container">
+  <main id="main-content" class="app-container" role="main">
     <div class="atm-card">
 
       <!-- ========================================== -->
       <!-- 1. LOGIN SCREEN -->
       <!-- ========================================== -->
-      <section id="screen-login" class="screen active" aria-labelledby="login-heading">
+      <section id="screen-login" class="screen active" role="region" aria-labelledby="login-heading" tabindex="-1">
         <div class="card-header text-center">
           <div class="app-logo" aria-hidden="true">🏧</div>
           <h1 id="login-heading" class="title">ATM Machine</h1>
@@ -38,6 +41,8 @@
               class="form-input" 
               placeholder="e.g. user1" 
               autocomplete="username" 
+              aria-required="true"
+              aria-describedby="login-error"
               required
             >
           </div>
@@ -54,13 +59,17 @@
               inputmode="numeric" 
               pattern="[0-9]{4}" 
               autocomplete="current-password" 
+              aria-required="true"
+              aria-label="4-digit PIN"
+              aria-describedby="login-pin-hint login-error"
               required
             >
+            <small id="login-pin-hint" class="sr-only">Enter your 4-digit numerical PIN</small>
           </div>
 
           <div id="login-error" class="message-banner error hidden" role="alert" aria-live="assertive"></div>
 
-          <button type="submit" id="btn-login-submit" class="btn btn-primary btn-block">
+          <button type="submit" id="btn-login-submit" class="btn btn-primary btn-block" aria-label="Sign In to your account">
             <span class="btn-text">Sign In</span>
             <span class="spinner hidden" aria-hidden="true"></span>
           </button>
@@ -70,17 +79,17 @@
       <!-- ========================================== -->
       <!-- 2. MAIN MENU (Dashboard) -->
       <!-- ========================================== -->
-      <section id="screen-menu" class="screen" aria-labelledby="menu-heading">
+      <section id="screen-menu" class="screen" role="region" aria-labelledby="menu-heading" tabindex="-1">
         <header class="menu-header">
           <span class="user-greeting">Welcome back,</span>
           <h2 id="menu-heading" class="user-id-display"><span id="menu-user-id">User</span></h2>
         </header>
 
         <!-- Balance Display Card -->
-        <div class="balance-card">
+        <div class="balance-card" role="region" aria-label="Available Account Balance">
           <span class="balance-label">Total Available Balance</span>
           <div class="balance-amount-wrapper">
-            <span id="menu-balance-value" class="balance-value">$0.00</span>
+            <span id="menu-balance-value" class="balance-value" aria-live="polite">$0.00</span>
           </div>
           <span class="balance-status-tag">
             <span class="status-indicator" aria-hidden="true"></span> Active Session
@@ -88,19 +97,19 @@
         </div>
 
         <!-- Recent Activity Panel (Last 3 Transactions) -->
-        <div id="recent-activity-panel" class="recent-activity-panel">
+        <div id="recent-activity-panel" class="recent-activity-panel" role="region" aria-label="Recent Account Activity">
           <div class="recent-activity-header">
             <span class="recent-activity-title">Recent Activity</span>
-            <button type="button" id="btn-view-all-history" class="btn-link">View All →</button>
+            <button type="button" id="btn-view-all-history" class="btn-link" aria-label="View all transactions in transaction history">View All →</button>
           </div>
-          <div id="recent-activity-loading" class="recent-loading hidden">
+          <div id="recent-activity-loading" class="recent-loading hidden" aria-live="polite">
             <span class="spinner spinner-sm" aria-hidden="true"></span>
             <span>Loading...</span>
           </div>
-          <div id="recent-activity-empty" class="recent-empty hidden">
+          <div id="recent-activity-empty" class="recent-empty hidden" aria-live="polite">
             <span>No recent transactions</span>
           </div>
-          <ul id="recent-activity-list" class="recent-list" role="list">
+          <ul id="recent-activity-list" class="recent-list" role="list" aria-label="List of last three transactions">
             <!-- Last 3 transaction items injected by JS -->
           </ul>
         </div>
@@ -108,8 +117,8 @@
         <div id="menu-message" class="message-banner hidden" role="alert" aria-live="polite"></div>
 
         <!-- 4 Action Grid Buttons -->
-        <div class="actions-grid">
-          <button type="button" id="btn-nav-withdraw" class="action-tile">
+        <div class="actions-grid" role="group" aria-label="ATM Banking Actions">
+          <button type="button" id="btn-nav-withdraw" class="action-tile" aria-label="Withdraw cash from your account">
             <div class="action-icon" aria-hidden="true">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="2" y="5" width="20" height="14" rx="2"/>
@@ -119,7 +128,7 @@
             <span class="action-label">Withdraw</span>
           </button>
 
-          <button type="button" id="btn-nav-deposit" class="action-tile">
+          <button type="button" id="btn-nav-deposit" class="action-tile" aria-label="Deposit funds into your account">
             <div class="action-icon" aria-hidden="true">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
@@ -128,7 +137,7 @@
             <span class="action-label">Deposit</span>
           </button>
 
-          <button type="button" id="btn-nav-transfer" class="action-tile">
+          <button type="button" id="btn-nav-transfer" class="action-tile" aria-label="Transfer funds to another user">
             <div class="action-icon" aria-hidden="true">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="17 1 21 5 17 9"/>
@@ -140,7 +149,7 @@
             <span class="action-label">Transfer</span>
           </button>
 
-          <button type="button" id="btn-nav-history" class="action-tile">
+          <button type="button" id="btn-nav-history" class="action-tile" aria-label="View full transaction history">
             <div class="action-icon" aria-hidden="true">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"/>
@@ -152,7 +161,7 @@
         </div>
 
         <!-- Quit / Logout Button -->
-        <button type="button" id="btn-logout" class="btn btn-danger btn-block mt-4">
+        <button type="button" id="btn-logout" class="btn btn-danger btn-block mt-4" aria-label="Log out of current session">
           <span class="btn-text">Quit / Logout</span>
           <span class="spinner hidden" aria-hidden="true"></span>
         </button>
@@ -161,24 +170,24 @@
       <!-- ========================================== -->
       <!-- 3. WITHDRAW SCREEN -->
       <!-- ========================================== -->
-      <section id="screen-withdraw" class="screen" aria-labelledby="withdraw-heading">
+      <section id="screen-withdraw" class="screen" role="region" aria-labelledby="withdraw-heading" tabindex="-1">
         <div class="card-header">
           <h2 id="withdraw-heading" class="title">Withdraw Cash</h2>
           <p class="subtitle">Select or enter the amount to withdraw</p>
         </div>
 
-        <div class="account-pill">
+        <div class="account-pill" role="region" aria-label="Current available balance">
           <span>Current Balance:</span>
-          <strong id="withdraw-current-balance" class="pill-amount">$0.00</strong>
+          <strong id="withdraw-current-balance" class="pill-amount" aria-live="polite">$0.00</strong>
         </div>
 
         <form id="form-withdraw" class="atm-form" novalidate>
-          <div class="quick-amounts-label">Quick Amounts</div>
-          <div class="quick-amounts-grid" role="group" aria-label="Preset withdrawal amounts">
-            <button type="button" class="btn-quick-amount" data-amount="20">$20</button>
-            <button type="button" class="btn-quick-amount" data-amount="50">$50</button>
-            <button type="button" class="btn-quick-amount" data-amount="100">$100</button>
-            <button type="button" class="btn-quick-amount" data-amount="200">$200</button>
+          <div class="quick-amounts-label" id="quick-withdraw-label">Quick Amounts</div>
+          <div class="quick-amounts-grid" role="group" aria-labelledby="quick-withdraw-label">
+            <button type="button" class="btn-quick-amount" data-amount="20" aria-label="Set withdrawal amount to $20">$20</button>
+            <button type="button" class="btn-quick-amount" data-amount="50" aria-label="Set withdrawal amount to $50">$50</button>
+            <button type="button" class="btn-quick-amount" data-amount="100" aria-label="Set withdrawal amount to $100">$100</button>
+            <button type="button" class="btn-quick-amount" data-amount="200" aria-label="Set withdrawal amount to $200">$200</button>
           </div>
 
           <div class="form-group mt-3">
@@ -191,18 +200,20 @@
               placeholder="0.00" 
               min="1" 
               step="0.01" 
+              aria-required="true"
+              aria-describedby="withdraw-error"
               required
             >
           </div>
 
-          <div id="withdraw-error" class="message-banner error hidden" role="alert" aria-live="polite"></div>
+          <div id="withdraw-error" class="message-banner error hidden" role="alert" aria-live="assertive"></div>
 
           <div class="button-stack">
-            <button type="submit" id="btn-withdraw-submit" class="btn btn-primary btn-block">
+            <button type="submit" id="btn-withdraw-submit" class="btn btn-primary btn-block" aria-label="Confirm Cash Withdrawal">
               <span class="btn-text">Confirm Withdrawal</span>
               <span class="spinner hidden" aria-hidden="true"></span>
             </button>
-            <button type="button" class="btn btn-secondary btn-block btn-back">
+            <button type="button" class="btn btn-secondary btn-block btn-back" aria-label="Back to Main Menu">
               ← Back to Menu
             </button>
           </div>
@@ -212,15 +223,15 @@
       <!-- ========================================== -->
       <!-- 4. DEPOSIT SCREEN -->
       <!-- ========================================== -->
-      <section id="screen-deposit" class="screen" aria-labelledby="deposit-heading">
+      <section id="screen-deposit" class="screen" role="region" aria-labelledby="deposit-heading" tabindex="-1">
         <div class="card-header">
           <h2 id="deposit-heading" class="title">Deposit Funds</h2>
           <p class="subtitle">Deposit money directly into your account</p>
         </div>
 
-        <div class="account-pill">
+        <div class="account-pill" role="region" aria-label="Current available balance">
           <span>Current Balance:</span>
-          <strong id="deposit-current-balance" class="pill-amount">$0.00</strong>
+          <strong id="deposit-current-balance" class="pill-amount" aria-live="polite">$0.00</strong>
         </div>
 
         <form id="form-deposit" class="atm-form" novalidate>
@@ -234,18 +245,20 @@
               placeholder="0.00" 
               min="1" 
               step="0.01" 
+              aria-required="true"
+              aria-describedby="deposit-error"
               required
             >
           </div>
 
-          <div id="deposit-error" class="message-banner error hidden" role="alert" aria-live="polite"></div>
+          <div id="deposit-error" class="message-banner error hidden" role="alert" aria-live="assertive"></div>
 
           <div class="button-stack">
-            <button type="submit" id="btn-deposit-submit" class="btn btn-primary btn-block">
+            <button type="submit" id="btn-deposit-submit" class="btn btn-primary btn-block" aria-label="Confirm Deposit Funds">
               <span class="btn-text">Confirm Deposit</span>
               <span class="spinner hidden" aria-hidden="true"></span>
             </button>
-            <button type="button" class="btn btn-secondary btn-block btn-back">
+            <button type="button" class="btn btn-secondary btn-block btn-back" aria-label="Back to Main Menu">
               ← Back to Menu
             </button>
           </div>
@@ -255,15 +268,15 @@
       <!-- ========================================== -->
       <!-- 5. TRANSFER SCREEN -->
       <!-- ========================================== -->
-      <section id="screen-transfer" class="screen" aria-labelledby="transfer-heading">
+      <section id="screen-transfer" class="screen" role="region" aria-labelledby="transfer-heading" tabindex="-1">
         <div class="card-header">
           <h2 id="transfer-heading" class="title">Transfer Funds</h2>
           <p class="subtitle">Send money instantly to another account</p>
         </div>
 
-        <div class="account-pill">
+        <div class="account-pill" role="region" aria-label="Current available balance">
           <span>Current Balance:</span>
-          <strong id="transfer-current-balance" class="pill-amount">$0.00</strong>
+          <strong id="transfer-current-balance" class="pill-amount" aria-live="polite">$0.00</strong>
         </div>
 
         <form id="form-transfer" class="atm-form" novalidate>
@@ -275,9 +288,11 @@
               name="toUser" 
               class="form-input" 
               placeholder="e.g. user2" 
+              aria-required="true"
+              aria-describedby="transfer-self-warning transfer-error"
               required
             >
-            <small id="transfer-self-warning" class="input-hint text-warning hidden">
+            <small id="transfer-self-warning" class="input-hint text-warning hidden" role="alert">
               ⚠️ You cannot transfer funds to yourself.
             </small>
           </div>
@@ -292,18 +307,20 @@
               placeholder="0.00" 
               min="1" 
               step="0.01" 
+              aria-required="true"
+              aria-describedby="transfer-error"
               required
             >
           </div>
 
-          <div id="transfer-error" class="message-banner error hidden" role="alert" aria-live="polite"></div>
+          <div id="transfer-error" class="message-banner error hidden" role="alert" aria-live="assertive"></div>
 
           <div class="button-stack">
-            <button type="submit" id="btn-transfer-submit" class="btn btn-primary btn-block">
+            <button type="submit" id="btn-transfer-submit" class="btn btn-primary btn-block" aria-label="Confirm Fund Transfer">
               <span class="btn-text">Confirm Transfer</span>
               <span class="spinner hidden" aria-hidden="true"></span>
             </button>
-            <button type="button" class="btn btn-secondary btn-block btn-back">
+            <button type="button" class="btn btn-secondary btn-block btn-back" aria-label="Back to Main Menu">
               ← Back to Menu
             </button>
           </div>
@@ -313,39 +330,39 @@
       <!-- ========================================== -->
       <!-- 6. TRANSACTION HISTORY SCREEN -->
       <!-- ========================================== -->
-      <section id="screen-history" class="screen" aria-labelledby="history-heading">
+      <section id="screen-history" class="screen" role="region" aria-labelledby="history-heading" tabindex="-1">
         <div class="card-header">
           <h2 id="history-heading" class="title">Transaction History</h2>
           <p class="subtitle">Recent activity for this account</p>
         </div>
 
-        <div class="account-pill">
+        <div class="account-pill" role="region" aria-label="Current available balance">
           <span>Current Balance:</span>
-          <strong id="history-current-balance" class="pill-amount">$0.00</strong>
+          <strong id="history-current-balance" class="pill-amount" aria-live="polite">$0.00</strong>
         </div>
 
         <!-- History scrollable list container -->
-        <div class="history-container">
-          <div id="history-loading" class="history-loading hidden">
+        <div class="history-container" tabindex="0" role="region" aria-label="Scrollable transaction log">
+          <div id="history-loading" class="history-loading hidden" aria-live="polite">
             <span class="spinner spinner-large" aria-hidden="true"></span>
             <p>Loading transactions...</p>
           </div>
 
-          <div id="history-empty" class="history-empty hidden">
+          <div id="history-empty" class="history-empty hidden" aria-live="polite">
             <div class="empty-icon" aria-hidden="true">📑</div>
             <p>No transactions in this session.</p>
           </div>
 
-          <ul id="history-list" class="history-list" role="list">
+          <ul id="history-list" class="history-list" role="list" aria-label="List of past transactions">
             <!-- Dynamic transaction rows injected by JavaScript -->
           </ul>
         </div>
 
         <div class="button-stack mt-4">
-          <button type="button" id="btn-download-receipt" class="btn btn-primary btn-block">
+          <button type="button" id="btn-download-receipt" class="btn btn-primary btn-block" aria-label="Download session receipt as a text file">
             <span class="btn-text">📄 Download Receipt</span>
           </button>
-          <button type="button" class="btn btn-secondary btn-block btn-back">
+          <button type="button" class="btn btn-secondary btn-block btn-back" aria-label="Back to Main Menu">
             ← Back to Menu
           </button>
         </div>
@@ -357,15 +374,23 @@
   <!-- ========================================== -->
   <!-- TRANSACTION CONFIRMATION MODAL -->
   <!-- ========================================== -->
-  <div id="modal-confirm" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-    <div class="modal-card">
+  <div 
+    id="modal-confirm" 
+    class="modal-overlay hidden" 
+    role="dialog" 
+    aria-modal="true" 
+    aria-labelledby="modal-title"
+    aria-describedby="modal-subtitle"
+    tabindex="-1"
+  >
+    <div class="modal-card" role="document">
       <div class="modal-header">
         <div class="modal-icon" aria-hidden="true">⚠️</div>
         <h3 id="modal-title" class="modal-title">Confirm Transaction</h3>
-        <p class="modal-subtitle">Please verify details before proceeding</p>
+        <p id="modal-subtitle" class="modal-subtitle">Please verify details before proceeding</p>
       </div>
 
-      <div class="modal-details">
+      <div class="modal-details" role="region" aria-label="Transaction Summary">
         <div class="modal-detail-row">
           <span class="modal-detail-label">Transaction Type</span>
           <span id="modal-tx-type" class="modal-detail-val">Withdrawal</span>
@@ -381,10 +406,10 @@
       </div>
 
       <div class="modal-actions">
-        <button type="button" id="btn-modal-cancel" class="btn btn-secondary flex-1">
+        <button type="button" id="btn-modal-cancel" class="btn btn-secondary flex-1" aria-label="Cancel transaction and close dialog">
           Cancel
         </button>
-        <button type="button" id="btn-modal-confirm" class="btn btn-primary flex-1">
+        <button type="button" id="btn-modal-confirm" class="btn btn-primary flex-1" aria-label="Confirm transaction and execute">
           <span class="btn-text">Yes</span>
         </button>
       </div>

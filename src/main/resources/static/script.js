@@ -21,8 +21,9 @@ const state = {
   lastLoadedHistory: []
 };
 
-// Pending transaction confirmation callback
+// Pending transaction confirmation callback and focus restore pointer
 let pendingConfirmCallback = null;
+let lastFocusedElementBeforeModal = null;
 
 // ==============================================================================
 // 3. DOM ELEMENT REFERENCES
@@ -288,13 +289,17 @@ function showScreen(screenId) {
     loadRecentActivity();
   }
 
-  // Auto-focus primary input on the new screen
+  // Auto-focus primary input or first interactive control on the new screen
   setTimeout(() => {
     const activeScreen = document.getElementById(screenId);
     if (!activeScreen) return;
-    const firstInput = activeScreen.querySelector('input:not([type="hidden"]), button.action-tile');
-    if (firstInput) {
-      firstInput.focus();
+    const firstFocusable = activeScreen.querySelector(
+      'input:not([type="hidden"]):not([disabled]), button.action-tile, button.btn-primary:not([disabled]), button:not([disabled]), [tabindex="0"]'
+    );
+    if (firstFocusable) {
+      firstFocusable.focus();
+    } else {
+      activeScreen.focus();
     }
   }, 100);
 }
@@ -344,6 +349,7 @@ function setButtonLoading(button, isLoading, loadingText = '') {
 
 /**
  * Open confirmation modal with transaction details.
+ * Saves active element to restore focus on dismiss and manages focus entry.
  * @param {Object} options
  * @param {string} options.type - "Withdrawal" | "Deposit" | "Transfer"
  * @param {number} options.amount - Transaction amount
@@ -353,6 +359,8 @@ function setButtonLoading(button, isLoading, loadingText = '') {
 function openConfirmModal({ type, amount, recipient = null, onConfirm }) {
   if (!elements.modalConfirm) return;
 
+  // Save the currently focused element to restore focus upon modal dismissal
+  lastFocusedElementBeforeModal = document.activeElement;
   pendingConfirmCallback = onConfirm;
 
   if (elements.modalTxType) elements.modalTxType.textContent = type;
@@ -367,19 +375,27 @@ function openConfirmModal({ type, amount, recipient = null, onConfirm }) {
 
   elements.modalConfirm.classList.remove('hidden');
 
-  if (elements.btnModalConfirm) {
-    elements.btnModalConfirm.focus();
-  }
+  // Move focus into the modal confirmation button
+  setTimeout(() => {
+    if (elements.btnModalConfirm) {
+      elements.btnModalConfirm.focus();
+    }
+  }, 50);
 }
 
 /**
- * Dismiss confirmation modal and clear pending callback.
+ * Dismiss confirmation modal, clear pending callback, and restore focus.
  */
 function closeConfirmModal() {
   if (elements.modalConfirm) {
     elements.modalConfirm.classList.add('hidden');
   }
   pendingConfirmCallback = null;
+
+  // Restore keyboard focus back to the triggering element
+  if (lastFocusedElementBeforeModal && typeof lastFocusedElementBeforeModal.focus === 'function') {
+    lastFocusedElementBeforeModal.focus();
+  }
 }
 
 // ==============================================================================
@@ -945,6 +961,9 @@ function renderHistoryItems(items) {
     const details = item.details || item.description || 'Standard transaction';
     const timestamp = formatTimestamp(item.timestamp);
 
+    li.tabIndex = 0;
+    li.setAttribute('aria-label', `${typeLabel}: ${formattedAmount}, ${details}, ${timestamp}`);
+
     li.innerHTML = `
       <div class="history-left">
         <div class="history-badge ${badgeClass}" aria-hidden="true">${icon}</div>
@@ -1044,6 +1063,9 @@ function renderRecentActivityItems(items) {
     const typeLabel = formatTransactionType(typeStr);
     const formattedAmount = `${sign}${formatMoney(item.amount)}`;
     const timeLabel = formatCompactTimestamp(item.timestamp);
+
+    li.tabIndex = 0;
+    li.setAttribute('aria-label', `${typeLabel}: ${formattedAmount}, ${timeLabel}`);
 
     li.innerHTML = `
       <div class="recent-left">
@@ -1196,10 +1218,40 @@ function initApp() {
     });
   }
 
-  // Close modal on Escape key press
+  // Close modal on Escape key press and trap focus within modal when open
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && elements.modalConfirm && !elements.modalConfirm.classList.contains('hidden')) {
+    if (!elements.modalConfirm || elements.modalConfirm.classList.contains('hidden')) {
+      return;
+    }
+
+    if (e.key === 'Escape') {
+      e.preventDefault();
       closeConfirmModal();
+      return;
+    }
+
+    if (e.key === 'Tab') {
+      const focusableEls = elements.modalConfirm.querySelectorAll(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+      if (focusableEls.length === 0) return;
+
+      const firstEl = focusableEls[0];
+      const lastEl = focusableEls[focusableEls.length - 1];
+
+      if (e.shiftKey) {
+        // Shift + Tab: reverse wrap
+        if (document.activeElement === firstEl || !elements.modalConfirm.contains(document.activeElement)) {
+          e.preventDefault();
+          lastEl.focus();
+        }
+      } else {
+        // Tab: forward wrap
+        if (document.activeElement === lastEl || !elements.modalConfirm.contains(document.activeElement)) {
+          e.preventDefault();
+          firstEl.focus();
+        }
+      }
     }
   });
 
