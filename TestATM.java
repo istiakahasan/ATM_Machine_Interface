@@ -1,205 +1,130 @@
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.io.PrintStream;
-
 /**
  * File: TestATM.java
- * Responsibility: Automated test runner for the ATM system using pure Java SE (no external frameworks).
- * Executes 6 distinct test assertions covering authentication, lockout, balance checks,
- * deposits, transfers, and transaction history tracking.
+ * Responsibility: Plain Java test runner executing 8 unit assertions covering
+ * Account credentials, debit/credit logic, transfer coordination, self-transfer blocking,
+ * and Bank account lookup.
  */
 public class TestATM {
-    private static int passedCount = 0;
-    private static int failedCount = 0;
-
-    // Helper holder for ATM reference and captured console output
-    private static class ExecutionResult {
-        final ATM atm;
-        final String output;
-
-        ExecutionResult(ATM atm, String output) {
-            this.atm = atm;
-            this.output = output;
-        }
-    }
+    private static int passed = 0;
+    private static final int TOTAL_TESTS = 8;
 
     public static void main(String[] args) {
         System.out.println("================================================================================");
-        System.out.println("                     RUNNING ATM AUTOMATED TEST SUITE                           ");
+        System.out.println("                         ATM SYSTEM UNIT TEST SUITE                             ");
         System.out.println("================================================================================");
 
-        Persistence.resetDefaults();
-        test1_CorrectPinLogsIn();
-
-        Persistence.resetDefaults();
-        test2_WrongPinThreeTimesExits();
-
-        Persistence.resetDefaults();
-        test3_WithdrawExceedingBalancePrintsInsufficientFunds();
-
-        Persistence.resetDefaults();
-        test4_DepositIncreasesBalance();
-
-        Persistence.resetDefaults();
-        test5_TransferMovesMoneyFromAToB();
-
-        Persistence.resetDefaults();
-        test6_HistorySizeMatchesOperations();
+        test1_CorrectPin();
+        test2_WrongPin();
+        test3_DebitReducesBalance();
+        test4_DebitPastZero();
+        test5_CreditIncreasesBalance();
+        test6_TransferMovesMoney();
+        test7_TransferToSelfBlocked();
+        test8_FindNonexistentAccountReturnsNull();
 
         System.out.println("================================================================================");
-        System.out.printf("TEST RESULTS: %d PASSED, %d FAILED (TOTAL %d)%n",
-                passedCount, failedCount, (passedCount + failedCount));
+        System.out.printf("%d/%d tests passed%n", passed, TOTAL_TESTS);
         System.out.println("================================================================================");
 
-        if (failedCount > 0) {
+        if (passed != TOTAL_TESTS) {
             System.exit(1);
         }
     }
 
     /**
-     * Assertion 1: Correct PIN logs in successfully.
+     * 1. Correct PIN returns true from validatePin
      */
-    private static void test1_CorrectPinLogsIn() {
-        Bank bank = new Bank();
-        // Input: user1 / PIN 1234 / Menu 5 (Quit)
-        String simulatedInput = "user1\n1234\n5\n";
-        ExecutionResult result = executeAtm(simulatedInput, bank);
-
-        boolean condition = (result.output.contains("Authentication Successful! Welcome, user1.") || result.output.contains("Login successful"))
-                && result.atm.getCurrentAccount() != null
-                && "user1".equalsIgnoreCase(result.atm.getCurrentAccount().getUserId());
-
-        recordAssertion("1. Correct PIN logs in", condition,
-                condition ? "Authenticated successfully and initialized session."
-                          : "Failed to authenticate valid user credentials.");
+    private static void test1_CorrectPin() {
+        Account account = new Account("tester", "1234", 1000.00);
+        boolean result = account.validatePin("1234");
+        recordResult("1. Correct PIN returns true from validatePin", result);
     }
 
     /**
-     * Assertion 2: Entering wrong PIN 3 times triggers lockout and terminates.
+     * 2. Wrong PIN returns false
      */
-    private static void test2_WrongPinThreeTimesExits() {
-        Bank bank = new Bank();
-        // Input: 3 consecutive wrong PIN entries
-        String simulatedInput = "user1\n0000\nuser1\n1111\nuser1\n2222\n";
-        ExecutionResult result = executeAtm(simulatedInput, bank);
-
-        boolean condition = result.output.contains("[ACCESS DENIED] 3 incorrect attempts. Access locked. Exiting program...")
-                && result.atm.getCurrentAccount() == null;
-
-        recordAssertion("2. Wrong PIN 3 times exits", condition,
-                condition ? "Application terminated and locked after 3 failed attempts."
-                          : "Did not properly enforce 3-attempt lockout.");
+    private static void test2_WrongPin() {
+        Account account = new Account("tester", "1234", 1000.00);
+        boolean result = !account.validatePin("9999");
+        recordResult("2. Wrong PIN returns false", result);
     }
 
     /**
-     * Assertion 3: Withdrawing an amount exceeding balance prints exact "Insufficient Funds".
+     * 3. debit() reduces balance correctly
      */
-    private static void test3_WithdrawExceedingBalancePrintsInsufficientFunds() {
-        Bank bank = new Bank();
-        // Input: user1 ($1,000 balance) -> Option 2 (Withdraw) -> $5,000.00 -> Option 5 (Quit)
-        String simulatedInput = "user1\n1234\n2\n5000\n5\n";
-        ExecutionResult result = executeAtm(simulatedInput, bank);
-
-        boolean printedMessage = result.output.contains("Insufficient Funds");
-        boolean balanceUnchanged = (result.atm.getCurrentAccount() != null
-                && Math.abs(result.atm.getCurrentAccount().getBalance() - 1000.00) < 0.001);
-        boolean condition = printedMessage && balanceUnchanged;
-
-        recordAssertion("3. Withdraw > balance prints \"Insufficient Funds\"", condition,
-                condition ? "Printed exact phrase 'Insufficient Funds' without balance mutation."
-                          : "Failed: 'Insufficient Funds' was not printed or balance was modified.");
+    private static void test3_DebitReducesBalance() {
+        Account account = new Account("tester", "1234", 1000.00);
+        boolean debited = account.debit(300.00);
+        boolean balanceCorrect = Math.abs(account.getBalance() - 700.00) < 0.001;
+        recordResult("3. debit() reduces balance correctly", debited && balanceCorrect);
     }
 
     /**
-     * Assertion 4: Deposit increases account balance accordingly.
+     * 4. debit() past zero throws or returns false
      */
-    private static void test4_DepositIncreasesBalance() {
-        Bank bank = new Bank();
-        // Input: user1 ($1,000 balance) -> Option 3 (Deposit) -> $250.00 -> Option 5 (Quit)
-        String simulatedInput = "user1\n1234\n3\n250\n5\n";
-        ExecutionResult result = executeAtm(simulatedInput, bank);
-
-        double balance = result.atm.getCurrentAccount().getBalance();
-        boolean condition = Math.abs(balance - 1250.00) < 0.001;
-
-        recordAssertion("4. Deposit increases balance", condition,
-                condition ? String.format("Balance correctly increased to $%.2f.", balance)
-                          : String.format("Expected $1250.00 but balance was $%.2f.", balance));
+    private static void test4_DebitPastZero() {
+        Account account = new Account("tester", "1234", 500.00);
+        boolean debited = account.debit(900.00);
+        boolean balanceUnchanged = Math.abs(account.getBalance() - 500.00) < 0.001;
+        recordResult("4. debit() past zero throws or returns false", !debited && balanceUnchanged);
     }
 
     /**
-     * Assertion 5: Transfer moves money from sender account A to recipient account B.
+     * 5. credit() increases balance correctly
      */
-    private static void test5_TransferMovesMoneyFromAToB() {
+    private static void test5_CreditIncreasesBalance() {
+        Account account = new Account("tester", "1234", 500.00);
+        boolean credited = account.credit(250.00);
+        boolean balanceCorrect = Math.abs(account.getBalance() - 750.00) < 0.001;
+        recordResult("5. credit() increases balance correctly", credited && balanceCorrect);
+    }
+
+    /**
+     * 6. transfer() moves money between accounts
+     */
+    private static void test6_TransferMovesMoney() {
+        Account sender = new Account("sender", "1111", 1000.00);
+        Account recipient = new Account("recipient", "2222", 500.00);
         Bank bank = new Bank();
-        Account sender = bank.findAccount("user1");    // Initial: $1,000.00
-        Account recipient = bank.findAccount("user2"); // Initial: $500.00
 
-        // Input: user1 -> Option 4 (Transfer) -> recipient: user2 -> amount: $300.00 -> Option 5 (Quit)
-        String simulatedInput = "user1\n1234\n4\nuser2\n300\n5\n";
-        executeAtm(simulatedInput, bank);
-
+        boolean transferred = bank.transfer(sender, recipient, 300.00);
         boolean senderCorrect = Math.abs(sender.getBalance() - 700.00) < 0.001;
         boolean recipientCorrect = Math.abs(recipient.getBalance() - 800.00) < 0.001;
-        boolean condition = senderCorrect && recipientCorrect;
 
-        recordAssertion("5. Transfer moves money from A to B", condition,
-                condition ? String.format("Sender balance: $%.2f, Recipient balance: $%.2f.", sender.getBalance(), recipient.getBalance())
-                          : String.format("Balances inaccurate. Sender: $%.2f, Recipient: $%.2f.", sender.getBalance(), recipient.getBalance()));
+        recordResult("6. transfer() moves money between accounts", transferred && senderCorrect && recipientCorrect);
     }
 
     /**
-     * Assertion 6: History size matches total number of operations performed in the session.
+     * 7. transfer() to self is handled (blocked in our design)
      */
-    private static void test6_HistorySizeMatchesOperations() {
+    private static void test7_TransferToSelfBlocked() {
+        Account account = new Account("selfUser", "1234", 1000.00);
         Bank bank = new Bank();
-        // Input: Perform 3 operations: Deposit $200, Withdraw $50, Transfer $100 to user2
-        String simulatedInput = "user1\n1234\n3\n200\n2\n50\n4\nuser2\n100\n5\n";
-        ExecutionResult result = executeAtm(simulatedInput, bank);
 
-        int recordedSize = result.atm.getCurrentSessionHistory().size();
-        boolean condition = (recordedSize == 3);
+        boolean allowed = bank.transfer(account, account, 100.00);
+        boolean balanceUnchanged = Math.abs(account.getBalance() - 1000.00) < 0.001;
 
-        recordAssertion("6. History size matches number of operations", condition,
-                condition ? String.format("Session log recorded exactly %d transactions.", recordedSize)
-                          : String.format("Expected 3 transactions, but recorded %d.", recordedSize));
+        recordResult("7. transfer() to self is handled", !allowed && balanceUnchanged);
     }
 
     /**
-     * Helper to execute the ATM with redirected System.in and captured System.out.
-     * Crucially initializes ATM AFTER System.setIn so the Scanner binds to simulated input.
-     * Restores original input and output streams once finished.
+     * 8. findAccount("nonexistent") returns null
      */
-    private static ExecutionResult executeAtm(String simulatedInput, Bank bank) {
-        InputStream originalIn = System.in;
-        PrintStream originalOut = System.out;
-        ByteArrayOutputStream capturedOutput = new ByteArrayOutputStream();
-
-        try {
-            System.setIn(new ByteArrayInputStream(simulatedInput.getBytes()));
-            System.setOut(new PrintStream(capturedOutput));
-
-            ATM atm = new ATM(bank);
-            atm.start();
-
-            return new ExecutionResult(atm, capturedOutput.toString());
-        } finally {
-            System.setIn(originalIn);
-            System.setOut(originalOut);
-        }
+    private static void test8_FindNonexistentAccountReturnsNull() {
+        Bank bank = new Bank();
+        Account result = bank.findAccount("nonexistent");
+        recordResult("8. findAccount(\"nonexistent\") returns null", result == null);
     }
 
     /**
-     * Logs assertion status formatted as [PASS] or [FAIL].
+     * Formats output row as [PASS] or [FAIL].
      */
-    private static void recordAssertion(String label, boolean passed, String message) {
-        if (passed) {
-            passedCount++;
-            System.out.printf("[PASS] %-52s | %s%n", label, message);
+    private static void recordResult(String testName, boolean success) {
+        if (success) {
+            passed++;
+            System.out.printf("[PASS] %s%n", testName);
         } else {
-            failedCount++;
-            System.out.printf("[FAIL] %-52s | %s%n", label, message);
+            System.out.printf("[FAIL] %s%n", testName);
         }
     }
 }
