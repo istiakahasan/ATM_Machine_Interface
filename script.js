@@ -20,6 +20,9 @@ const state = {
   activeScreenId: 'screen-login'
 };
 
+// Pending transaction confirmation callback
+let pendingConfirmCallback = null;
+
 // ==============================================================================
 // 3. DOM ELEMENT REFERENCES
 // ==============================================================================
@@ -88,6 +91,15 @@ function initElements() {
     historyLoading: document.getElementById('history-loading'),
     historyEmpty: document.getElementById('history-empty'),
     historyList: document.getElementById('history-list'),
+
+    // Confirmation Modal
+    modalConfirm: document.getElementById('modal-confirm'),
+    modalTxType: document.getElementById('modal-tx-type'),
+    modalTxAmount: document.getElementById('modal-tx-amount'),
+    modalRowRecipient: document.getElementById('modal-row-recipient'),
+    modalTxRecipient: document.getElementById('modal-tx-recipient'),
+    btnModalCancel: document.getElementById('btn-modal-cancel'),
+    btnModalConfirm: document.getElementById('btn-modal-confirm'),
 
     // Generic Back Buttons
     backButtons: document.querySelectorAll('.btn-back')
@@ -313,7 +325,51 @@ function setButtonLoading(button, isLoading, loadingText = '') {
 }
 
 // ==============================================================================
-// 5. API CLIENT FUNCTIONS (async/await)
+// 5. TRANSACTION CONFIRMATION MODAL CONTROLLER
+// ==============================================================================
+
+/**
+ * Open confirmation modal with transaction details.
+ * @param {Object} options
+ * @param {string} options.type - "Withdrawal" | "Deposit" | "Transfer"
+ * @param {number} options.amount - Transaction amount
+ * @param {string|null} [options.recipient] - Recipient user ID (for transfers)
+ * @param {Function} options.onConfirm - Action to run if user clicks Yes
+ */
+function openConfirmModal({ type, amount, recipient = null, onConfirm }) {
+  if (!elements.modalConfirm) return;
+
+  pendingConfirmCallback = onConfirm;
+
+  if (elements.modalTxType) elements.modalTxType.textContent = type;
+  if (elements.modalTxAmount) elements.modalTxAmount.textContent = formatMoney(amount);
+
+  if (recipient && elements.modalRowRecipient && elements.modalTxRecipient) {
+    elements.modalTxRecipient.textContent = recipient;
+    elements.modalRowRecipient.classList.remove('hidden');
+  } else if (elements.modalRowRecipient) {
+    elements.modalRowRecipient.classList.add('hidden');
+  }
+
+  elements.modalConfirm.classList.remove('hidden');
+
+  if (elements.btnModalConfirm) {
+    elements.btnModalConfirm.focus();
+  }
+}
+
+/**
+ * Dismiss confirmation modal and clear pending callback.
+ */
+function closeConfirmModal() {
+  if (elements.modalConfirm) {
+    elements.modalConfirm.classList.add('hidden');
+  }
+  pendingConfirmCallback = null;
+}
+
+// ==============================================================================
+// 6. API CLIENT FUNCTIONS (async/await)
 // ==============================================================================
 
 /**
@@ -447,7 +503,7 @@ async function apiGetHistory(userId) {
 }
 
 // ==============================================================================
-// 6. ACTION HANDLERS & FLOW CONTROLLERS
+// 7. ACTION HANDLERS & FLOW CONTROLLERS
 // ==============================================================================
 
 /**
@@ -557,9 +613,9 @@ async function handleLogout() {
 }
 
 /**
- * Handle Withdrawal Submission
+ * Validate and prompt confirmation before withdrawal.
  */
-async function handleWithdraw(e) {
+function handleWithdraw(e) {
   e.preventDefault();
   setMsg(elements.withdrawError, '');
 
@@ -572,6 +628,20 @@ async function handleWithdraw(e) {
     return;
   }
 
+  // Open Confirmation Modal BEFORE sending API request
+  openConfirmModal({
+    type: 'Withdrawal',
+    amount: amount,
+    recipient: null,
+    onConfirm: () => executeWithdrawal(amount)
+  });
+}
+
+/**
+ * Execute actual withdrawal API request after user confirmation.
+ * @param {number} amount
+ */
+async function executeWithdrawal(amount) {
   setButtonLoading(elements.btnWithdrawSubmit, true, 'Processing...');
 
   try {
@@ -603,9 +673,9 @@ async function handleWithdraw(e) {
 }
 
 /**
- * Handle Deposit Submission
+ * Validate and prompt confirmation before deposit.
  */
-async function handleDeposit(e) {
+function handleDeposit(e) {
   e.preventDefault();
   setMsg(elements.depositError, '');
 
@@ -618,6 +688,20 @@ async function handleDeposit(e) {
     return;
   }
 
+  // Open Confirmation Modal BEFORE sending API request
+  openConfirmModal({
+    type: 'Deposit',
+    amount: amount,
+    recipient: null,
+    onConfirm: () => executeDeposit(amount)
+  });
+}
+
+/**
+ * Execute actual deposit API request after user confirmation.
+ * @param {number} amount
+ */
+async function executeDeposit(amount) {
   setButtonLoading(elements.btnDepositSubmit, true, 'Processing...');
 
   try {
@@ -648,9 +732,9 @@ async function handleDeposit(e) {
 }
 
 /**
- * Handle Transfer Submission
+ * Validate and prompt confirmation before transfer.
  */
-async function handleTransfer(e) {
+function handleTransfer(e) {
   e.preventDefault();
   setMsg(elements.transferError, '');
 
@@ -676,6 +760,21 @@ async function handleTransfer(e) {
     return;
   }
 
+  // Open Confirmation Modal BEFORE sending API request
+  openConfirmModal({
+    type: 'Transfer',
+    amount: amount,
+    recipient: recipient,
+    onConfirm: () => executeTransfer(recipient, amount)
+  });
+}
+
+/**
+ * Execute actual transfer API request after user confirmation.
+ * @param {string} recipient
+ * @param {number} amount
+ */
+async function executeTransfer(recipient, amount) {
   setButtonLoading(elements.btnTransferSubmit, true, 'Transferring...');
 
   try {
@@ -829,7 +928,7 @@ function formatTransactionType(rawType) {
 }
 
 // ==============================================================================
-// 7. EVENT LISTENERS & INITIALIZATION
+// 8. EVENT LISTENERS & INITIALIZATION
 // ==============================================================================
 
 function initApp() {
@@ -872,17 +971,17 @@ function initApp() {
     });
   }
 
-  // 5. Withdrawal Form Submit
+  // 5. Withdrawal Form Submit (prompts Confirmation Modal)
   if (elements.formWithdraw) {
     elements.formWithdraw.addEventListener('submit', handleWithdraw);
   }
 
-  // 6. Deposit Form Submit
+  // 6. Deposit Form Submit (prompts Confirmation Modal)
   if (elements.formDeposit) {
     elements.formDeposit.addEventListener('submit', handleDeposit);
   }
 
-  // 7. Transfer Form Submit & Realtime Self-Transfer Warning
+  // 7. Transfer Form Submit (prompts Confirmation Modal) & Realtime Warning
   if (elements.formTransfer) {
     elements.formTransfer.addEventListener('submit', handleTransfer);
   }
@@ -897,7 +996,40 @@ function initApp() {
     });
   }
 
-  // 8. Back Buttons across all sub-screens
+  // 8. Confirmation Modal Actions (Yes / Cancel)
+  if (elements.btnModalConfirm) {
+    elements.btnModalConfirm.addEventListener('click', () => {
+      const action = pendingConfirmCallback;
+      closeConfirmModal();
+      if (typeof action === 'function') {
+        action();
+      }
+    });
+  }
+
+  if (elements.btnModalCancel) {
+    elements.btnModalCancel.addEventListener('click', () => {
+      closeConfirmModal();
+    });
+  }
+
+  // Close modal when clicking dark overlay backdrop
+  if (elements.modalConfirm) {
+    elements.modalConfirm.addEventListener('click', (e) => {
+      if (e.target === elements.modalConfirm) {
+        closeConfirmModal();
+      }
+    });
+  }
+
+  // Close modal on Escape key press
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && elements.modalConfirm && !elements.modalConfirm.classList.contains('hidden')) {
+      closeConfirmModal();
+    }
+  });
+
+  // 9. Back Buttons across all sub-screens
   if (elements.backButtons) {
     elements.backButtons.forEach(btn => {
       btn.addEventListener('click', () => {
@@ -906,7 +1038,7 @@ function initApp() {
     });
   }
 
-  // 9. Initial Screen Setup
+  // 10. Initial Screen Setup
   showScreen('screen-login');
 }
 

@@ -333,6 +333,43 @@
     </div>
   </main>
 
+  <!-- ========================================== -->
+  <!-- TRANSACTION CONFIRMATION MODAL -->
+  <!-- ========================================== -->
+  <div id="modal-confirm" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-icon" aria-hidden="true">⚠️</div>
+        <h3 id="modal-title" class="modal-title">Confirm Transaction</h3>
+        <p class="modal-subtitle">Please verify details before proceeding</p>
+      </div>
+
+      <div class="modal-details">
+        <div class="modal-detail-row">
+          <span class="modal-detail-label">Transaction Type</span>
+          <span id="modal-tx-type" class="modal-detail-val">Withdrawal</span>
+        </div>
+        <div class="modal-detail-row">
+          <span class="modal-detail-label">Amount</span>
+          <span id="modal-tx-amount" class="modal-detail-val modal-amount">$0.00</span>
+        </div>
+        <div id="modal-row-recipient" class="modal-detail-row hidden">
+          <span class="modal-detail-label">Recipient</span>
+          <span id="modal-tx-recipient" class="modal-detail-val">user2</span>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" id="btn-modal-cancel" class="btn btn-secondary flex-1">
+          Cancel
+        </button>
+        <button type="button" id="btn-modal-confirm" class="btn btn-primary flex-1">
+          <span class="btn-text">Yes</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script src="script.js"></script>
 </body>
 </html>
