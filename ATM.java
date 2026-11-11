@@ -148,6 +148,7 @@ public class ATM {
 
         boolean success = currentAccount.debit(amount);
         if (success) {
+            bank.save(); // Persistence: rewrite accounts.txt after debit
             Transaction tx = new Transaction("WITHDRAW", amount,
                     String.format("Cash withdrawal. New balance: $%.2f", currentAccount.getBalance()));
             currentSessionHistory.add(tx);
@@ -169,6 +170,7 @@ public class ATM {
 
         boolean success = currentAccount.credit(amount);
         if (success) {
+            bank.save(); // Persistence: rewrite accounts.txt after credit
             Transaction tx = new Transaction("DEPOSIT", amount,
                     String.format("Cash deposit. New balance: $%.2f", currentAccount.getBalance()));
             currentSessionHistory.add(tx);

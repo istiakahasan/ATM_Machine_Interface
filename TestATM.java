@@ -29,11 +29,22 @@ public class TestATM {
         System.out.println("                     RUNNING ATM AUTOMATED TEST SUITE                           ");
         System.out.println("================================================================================");
 
+        Persistence.resetDefaults();
         test1_CorrectPinLogsIn();
+
+        Persistence.resetDefaults();
         test2_WrongPinThreeTimesExits();
+
+        Persistence.resetDefaults();
         test3_WithdrawExceedingBalancePrintsInsufficientFunds();
+
+        Persistence.resetDefaults();
         test4_DepositIncreasesBalance();
+
+        Persistence.resetDefaults();
         test5_TransferMovesMoneyFromAToB();
+
+        Persistence.resetDefaults();
         test6_HistorySizeMatchesOperations();
 
         System.out.println("================================================================================");

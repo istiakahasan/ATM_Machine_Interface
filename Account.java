@@ -42,6 +42,15 @@ public class Account {
     }
 
     /**
+     * Retrieves the account PIN (used for persistence serialization).
+     *
+     * @return String PIN
+     */
+    public String getPin() {
+        return pin;
+    }
+
+    /**
      * Retrieves the current balance.
      * Note: No public setter is provided for balance to guarantee data integrity.
      * Balance modifications are only permitted through debit() and credit().

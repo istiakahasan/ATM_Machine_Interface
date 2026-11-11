@@ -10,23 +10,24 @@ public class Bank {
     private final ArrayList<Account> accounts;
 
     /**
-     * Constructs a Bank instance and populates it with seed mock accounts.
+     * Constructs a Bank instance and loads accounts via Persistence from accounts.txt.
      */
     public Bank() {
-        this.accounts = new ArrayList<>();
-        seedMockAccounts();
+        this.accounts = Persistence.loadAccounts();
     }
 
     /**
-     * Seeds initial mock accounts for testing and demonstration purposes.
+     * Persists the current state of accounts to accounts.txt.
      */
-    private void seedMockAccounts() {
-        // user1 with $1,000.00
-        accounts.add(new Account("user1", "1234", 1000.00));
-        // user2 with $500.00
-        accounts.add(new Account("user2", "5678", 500.00));
-        // user3 with $2,500.00
-        accounts.add(new Account("user3", "9999", 2500.00));
+    public void save() {
+        Persistence.saveAccounts(this.accounts);
+    }
+
+    /**
+     * Retrieves the list of accounts managed by this bank.
+     */
+    public ArrayList<Account> getAccounts() {
+        return accounts;
     }
 
     /**
@@ -93,6 +94,7 @@ public class Bank {
         boolean debited = from.debit(amount);
         if (debited) {
             to.credit(amount);
+            save(); // Persistence: rewrite accounts.txt after transfer
             return true;
         }
 
