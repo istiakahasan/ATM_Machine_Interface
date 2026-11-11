@@ -17,7 +17,8 @@ const state = {
   currentUser: null,
   currentBalance: 0.0,
   isLoading: false,
-  activeScreenId: 'screen-login'
+  activeScreenId: 'screen-login',
+  lastLoadedHistory: []
 };
 
 // Pending transaction confirmation callback
@@ -91,6 +92,7 @@ function initElements() {
     historyLoading: document.getElementById('history-loading'),
     historyEmpty: document.getElementById('history-empty'),
     historyList: document.getElementById('history-list'),
+    btnDownloadReceipt: document.getElementById('btn-download-receipt'),
 
     // Confirmation Modal
     modalConfirm: document.getElementById('modal-confirm'),
@@ -831,6 +833,8 @@ async function loadHistoryScreen() {
     const historyData = await apiGetHistory(state.currentUser);
     elements.historyLoading.classList.add('hidden');
 
+    state.lastLoadedHistory = Array.isArray(historyData) ? historyData : [];
+
     if (!Array.isArray(historyData) || historyData.length === 0) {
       elements.historyEmpty.classList.remove('hidden');
       return;
@@ -839,6 +843,7 @@ async function loadHistoryScreen() {
     renderHistoryItems(historyData);
   } catch (err) {
     elements.historyLoading.classList.add('hidden');
+    state.lastLoadedHistory = [];
     if (isNetworkError(err)) {
       toast('Server unreachable', 'error');
     } else {
@@ -846,6 +851,64 @@ async function loadHistoryScreen() {
     }
     elements.historyEmpty.classList.remove('hidden');
   }
+}
+
+/**
+ * Download the current session's transactions as a formatted .txt receipt using Blob API.
+ */
+function downloadReceipt() {
+  const transactions = state.lastLoadedHistory;
+
+  if (!transactions || transactions.length === 0) {
+    toast('No transactions available to download.', 'warning');
+    return;
+  }
+
+  const divider = '='.repeat(52);
+  const subDivider = '-'.repeat(52);
+  const now = new Date();
+  const dateStr = now.toLocaleDateString() + ' ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  let content = `${divider}\n`;
+  content += `               ATM TRANSACTION RECEIPT              \n`;
+  content += `${divider}\n`;
+  content += `Customer ID  : ${state.currentUser || 'N/A'}\n`;
+  content += `Issued Date  : ${dateStr}\n`;
+  content += `Curr Balance : ${formatMoney(state.currentBalance)}\n`;
+  content += `${subDivider}\n`;
+  content += `TRANSACTION LOG (${transactions.length} record${transactions.length > 1 ? 's' : ''}):\n`;
+  content += `${subDivider}\n\n`;
+
+  transactions.forEach((tx, idx) => {
+    const type = (tx.type || 'TRANSACTION').toUpperCase();
+    const isCredit = type.includes('DEPOSIT') || type.includes('CREDIT') || type.includes('TRANSFER_IN');
+    const sign = isCredit ? '+' : '-';
+    const amountStr = `${sign}${formatMoney(tx.amount)}`;
+    const details = tx.details || tx.description || 'Standard transaction';
+    const time = formatTimestamp(tx.timestamp);
+
+    content += `[${idx + 1}] ${time}\n`;
+    content += `    Type   : ${type}\n`;
+    content += `    Amount : ${amountStr}\n`;
+    content += `    Details: ${details}\n\n`;
+  });
+
+  content += `${subDivider}\n`;
+  content += `           Thank you for banking with us!           \n`;
+  content += `${divider}\n`;
+
+  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+  const objectUrl = URL.createObjectURL(blob);
+  const downloadLink = document.createElement('a');
+  downloadLink.href = objectUrl;
+  downloadLink.download = `ATM_Receipt_${state.currentUser || 'Account'}_${now.toISOString().slice(0, 10)}.txt`;
+
+  document.body.appendChild(downloadLink);
+  downloadLink.click();
+  document.body.removeChild(downloadLink);
+
+  URL.revokeObjectURL(objectUrl);
+  toast('Receipt downloaded successfully.', 'success');
 }
 
 /**
@@ -1149,7 +1212,12 @@ function initApp() {
     });
   }
 
-  // 10. Initial Screen Setup
+  // 10. Download Receipt Button
+  if (elements.btnDownloadReceipt) {
+    elements.btnDownloadReceipt.addEventListener('click', downloadReceipt);
+  }
+
+  // 11. Initial Screen Setup
   showScreen('screen-login');
 }
 
