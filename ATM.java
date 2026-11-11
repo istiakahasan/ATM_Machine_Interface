@@ -1,10 +1,12 @@
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Scanner;
 
 /**
  * File: ATM.java
  * Responsibility: Manages user interface interactions, console input/output,
- * authentication control, and coordinates banking transactions for the current session.
+ * authentication control, and coordinates banking transactions for the current
+ * session.
  */
 public class ATM {
     // Member fields
@@ -166,7 +168,8 @@ public class ATM {
     }
 
     /**
-     * Handles funds transfer to another account with balance and recipient validation.
+     * Handles funds transfer to another account with balance and recipient
+     * validation.
      */
     public void transfer() {
         System.out.println("\n--- TRANSFER FUNDS ---");
@@ -202,7 +205,8 @@ public class ATM {
         boolean success = bank.transfer(currentAccount, recipientAccount, amount);
         if (success) {
             Transaction tx = new Transaction("TRANSFER", amount,
-                    String.format("Transferred to %s. New balance: $%.2f", recipientAccount.getUserId(), currentAccount.getBalance()));
+                    String.format("Transferred to %s. New balance: $%.2f", recipientAccount.getUserId(),
+                            currentAccount.getBalance()));
             currentSessionHistory.add(tx);
             System.out.printf("Transfer successful! Sent $%.2f to %s.%n", amount, recipientAccount.getUserId());
             System.out.printf("Updated Balance: $%.2f%n", currentAccount.getBalance());
@@ -213,23 +217,35 @@ public class ATM {
 
     /**
      * Displays the formatted transaction history for the current session.
+     * Renders a clean tabular layout with columns: # | Type | Amount | Details | Time.
+     * If no transactions exist, prints "No transactions in this session."
      */
     public void showHistory() {
-        System.out.println("\n==================================================");
-        System.out.println("          CURRENT SESSION TRANSACTION LOG         ");
-        System.out.println("==================================================");
+        System.out.println("\n========================================================================================================");
+        System.out.println("                                  CURRENT SESSION TRANSACTION HISTORY                                   ");
+        System.out.println("========================================================================================================");
         System.out.println("User ID: " + currentAccount.getUserId());
-        System.out.printf("Available Balance: $%.2f%n", currentAccount.getBalance());
-        System.out.println("--------------------------------------------------");
+        System.out.printf("Current Available Balance: $%.2f%n", currentAccount.getBalance());
+        System.out.println("--------------------------------------------------------------------------------------------------------");
 
         if (currentSessionHistory.isEmpty()) {
-            System.out.println("No transactions have been recorded in this session.");
+            System.out.println("No transactions in this session.");
         } else {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            System.out.printf("%-3s | %-8s | %-12s | %-45s | %-19s%n", "#", "Type", "Amount", "Details", "Time");
+            System.out.println("----+----------+--------------+-----------------------------------------------+--------------------");
+
             for (int i = 0; i < currentSessionHistory.size(); i++) {
-                System.out.printf("%d. %s%n", (i + 1), currentSessionHistory.get(i).toString());
+                Transaction tx = currentSessionHistory.get(i);
+                System.out.printf("%-3d | %-8s | $%-11.2f | %-45s | %-19s%n",
+                        (i + 1),
+                        tx.getType(),
+                        tx.getAmount(),
+                        tx.getDetails(),
+                        tx.getTimestamp().format(formatter));
             }
         }
-        System.out.println("==================================================");
+        System.out.println("========================================================================================================");
     }
 
     /**
