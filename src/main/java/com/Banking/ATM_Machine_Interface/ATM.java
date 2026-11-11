@@ -5,9 +5,12 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 /**
- * File: ATM.java
- * Responsibility: Manages user interface interactions, console authentication,
- * menu navigation, withdrawals, deposits, transfers, and session transaction logging.
+ * Presentation and session controller for the console ATM machine.
+ * Orchestrates user authentication, 3-attempt lockout security, input handling,
+ * transactional menus, session history tracking, and delegations to the Bank service.
+ *
+ * @author Senior Java Architect
+ * @version 1.0
  */
 public class ATM {
     private static final int MAX_ATTEMPTS = 3;
@@ -17,6 +20,11 @@ public class ATM {
     private Account currentAccount;
     private final ArrayList<Transaction> currentSessionHistory;
 
+    /**
+     * Constructs an ATM terminal instance bound to the specified Bank backend.
+     *
+     * @param bank The bank service providing account lookup and transfer capabilities.
+     */
     public ATM(Bank bank) {
         this.bank = bank;
         this.scanner = new Scanner(System.in);
@@ -24,6 +32,10 @@ public class ATM {
         this.currentAccount = null;
     }
 
+    /**
+     * Starts the ATM system. Enforces an authentication loop allowing up to 3 PIN attempts
+     * before permanently locking access and exiting the program.
+     */
     public void start() {
         print("==================================================");
         print("          WELCOME TO THE CONSOLE ATM              ");
@@ -66,6 +78,10 @@ public class ATM {
         }
     }
 
+    /**
+     * Displays the primary 5-option interactive menu loop and processes choices via switch-case.
+     * Automatically re-prompts on blank input or invalid numeric choices.
+     */
     public void showMenu() {
         boolean sessionActive = true;
         while (sessionActive) {
@@ -120,6 +136,10 @@ public class ATM {
         }
     }
 
+    /**
+     * Handles cash withdrawal: prompts for an amount, performs a balance check BEFORE debiting,
+     * outputs "Insufficient Funds" if balance is exceeded, updates balance, and logs to session history.
+     */
     public void withdraw() {
         print("\n--- WITHDRAW CASH ---");
         printf("Current Balance: $%.2f%n", currentAccount.getBalance());
@@ -140,6 +160,10 @@ public class ATM {
         }
     }
 
+    /**
+     * Handles cash deposit: prompts for an amount, credits account balance,
+     * updates persistent storage, and appends a record to session history.
+     */
     public void deposit() {
         print("\n--- DEPOSIT CASH ---");
         printf("Current Balance: $%.2f%n", currentAccount.getBalance());
@@ -155,6 +179,10 @@ public class ATM {
         }
     }
 
+    /**
+     * Handles funds transfer: prompts for recipient account ID, validates existence and self-transfer rules,
+     * checks balance BEFORE transfer, calls Bank.transfer, and logs the transaction.
+     */
     public void transfer() {
         print("\n--- TRANSFER FUNDS ---");
         printf("Current Balance: $%.2f%n", currentAccount.getBalance());
@@ -199,6 +227,10 @@ public class ATM {
         return recipientAccount;
     }
 
+    /**
+     * Displays all transactions logged in the current active session in a formatted table.
+     * If no operations have taken place, outputs "No transactions in this session."
+     */
     public void showHistory() {
         print("\n========================================================================================================");
         print("                                  CURRENT SESSION TRANSACTION HISTORY                                   ");
@@ -263,15 +295,31 @@ public class ATM {
         System.out.printf(format, args);
     }
 
+    /**
+     * Retrieves the currently authenticated Account for this session.
+     *
+     * @return The active Account reference, or null if unauthenticated.
+     */
     public Account getCurrentAccount() {
         return currentAccount;
     }
 
+    /**
+     * Retrieves the transaction history specific to the current active session.
+     *
+     * @return An ArrayList containing this session's Transaction objects.
+     */
     public ArrayList<Transaction> getCurrentSessionHistory() {
         return currentSessionHistory;
     }
 
+    /**
+     * Retrieves the Bank instance connected to this ATM terminal.
+     *
+     * @return The associated Bank instance.
+     */
     public Bank getBank() {
         return bank;
     }
 }
+

@@ -1,13 +1,15 @@
 /**
- * File: Main.java
- * Responsibility: Serves as the program entry point. Instantiates the Bank,
- * seeds accounts, creates the ATM instance, and starts the console application.
+ * Application bootstrapper and composition root for the Console ATM Machine simulation.
+ * Instantiates the Bank repository, connects the ATM terminal, and triggers the program loop.
+ *
+ * @author Senior Java Architect
+ * @version 1.0
  */
 public class Main {
     /**
-     * Application execution begins here.
+     * Program execution entry point.
      *
-     * @param args Command-line arguments (not used)
+     * @param args Command-line arguments supplied at program launch (not utilized).
      */
     public static void main(String[] args) {
         // Step 1: Initialize the Bank repository (seeds mock accounts internally)

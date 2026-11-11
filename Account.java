@@ -1,21 +1,23 @@
 /**
- * File: Account.java
- * Responsibility: Represents an individual bank customer's account entity.
- * Encapsulates credentials (userId, pin) and balance state, providing
- * controlled debit and credit operations.
+ * Represents an individual bank customer's account entity.
+ * Encapsulates credentials (User ID and PIN) and financial balance,
+ * protecting internal state through controlled debit and credit operations.
+ *
+ * @author Senior Java Architect
+ * @version 1.0
  */
 public class Account {
-    // Encapsulated private attributes
     private final String userId;
     private final String pin;
     private double balance;
 
     /**
-     * Parameterized constructor to initialize account state.
+     * Constructs a new Account with the specified identifier, authentication PIN, and initial opening balance.
      *
-     * @param userId  Unique customer identifier
-     * @param pin     Secret 4-digit PIN for authentication
-     * @param balance Initial opening balance
+     * @param userId  The unique identifier for the account owner; cannot be null or empty.
+     * @param pin     The secret authentication PIN string; cannot be null or empty.
+     * @param balance The initial balance of the account; must be non-negative.
+     * @throws IllegalArgumentException If userId or pin are null/empty, or if balance is negative.
      */
     public Account(String userId, String pin, double balance) {
         if (userId == null || userId.trim().isEmpty()) {
@@ -33,39 +35,38 @@ public class Account {
     }
 
     /**
-     * Retrieves the User ID.
+     * Retrieves the unique identifier associated with this account.
      *
-     * @return String user identifier
+     * @return The user identifier string.
      */
     public String getUserId() {
         return userId;
     }
 
     /**
-     * Retrieves the account PIN (used for persistence serialization).
+     * Retrieves the secret authentication PIN (used for persistence serialization).
      *
-     * @return String PIN
+     * @return The account's PIN string.
      */
     public String getPin() {
         return pin;
     }
 
     /**
-     * Retrieves the current balance.
-     * Note: No public setter is provided for balance to guarantee data integrity.
-     * Balance modifications are only permitted through debit() and credit().
+     * Retrieves the current available balance of the account.
+     * To preserve data encapsulation, no public setter is provided.
      *
-     * @return current double balance
+     * @return The current monetary balance as a double.
      */
     public double getBalance() {
         return balance;
     }
 
     /**
-     * Validates whether the provided PIN matches this account's PIN.
+     * Validates whether the supplied candidate PIN matches this account's secret PIN.
      *
-     * @param enteredPin The PIN string entered by the user
-     * @return true if credentials match; false otherwise
+     * @param enteredPin The candidate PIN entered by the user.
+     * @return true if credentials match exactly; false otherwise.
      */
     public boolean validatePin(String enteredPin) {
         if (enteredPin == null) {
@@ -75,10 +76,10 @@ public class Account {
     }
 
     /**
-     * Deducts funds from the account if amount is positive and balance is sufficient.
+     * Deducts a positive monetary amount from the account balance if funds are sufficient.
      *
-     * @param amount The double value to deduct
-     * @return true if debit was successful; false if insufficient funds or invalid amount
+     * @param amount The monetary amount to withdraw or debit; must be strictly positive.
+     * @return true if the debit operation succeeded; false if amount exceeds balance or is non-positive.
      */
     public boolean debit(double amount) {
         if (amount <= 0.0 || amount > balance) {
@@ -89,10 +90,10 @@ public class Account {
     }
 
     /**
-     * Deposits funds into the account if amount is positive.
+     * Credits a positive monetary amount to the account balance.
      *
-     * @param amount The double value to add
-     * @return true if credit was successful; false if amount is non-positive
+     * @param amount The monetary amount to deposit or credit; must be strictly positive.
+     * @return true if the credit operation succeeded; false if amount is non-positive.
      */
     public boolean credit(double amount) {
         if (amount <= 0.0) {
