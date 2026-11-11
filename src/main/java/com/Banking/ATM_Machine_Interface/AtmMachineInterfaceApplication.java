@@ -1,13 +1,12 @@
 package com.Banking.ATM_Machine_Interface;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-
-@SpringBootApplication
+/**
+ * File: AtmMachineInterfaceApplication.java
+ * Responsibility: Pure Java SE entry point delegating to Main.
+ */
 public class AtmMachineInterfaceApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(AtmMachineInterfaceApplication.class, args);
-	}
-
+    public static void main(String[] args) {
+        Main.main(args);
+    }
 }
