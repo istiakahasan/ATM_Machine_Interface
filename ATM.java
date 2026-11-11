@@ -27,6 +27,18 @@ public class ATM {
         this.currentAccount = null;
     }
 
+    public Account getCurrentAccount() {
+        return currentAccount;
+    }
+
+    public ArrayList<Transaction> getCurrentSessionHistory() {
+        return currentSessionHistory;
+    }
+
+    public Bank getBank() {
+        return bank;
+    }
+
     /**
      * Initiates the ATM interaction loop.
      * Enforces authentication with a 3-attempt lockout mechanism.
