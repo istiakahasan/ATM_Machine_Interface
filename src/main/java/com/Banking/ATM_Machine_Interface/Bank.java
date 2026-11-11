@@ -11,8 +11,7 @@ public class Bank {
     private final ArrayList<Account> accounts;
 
     public Bank() {
-        this.accounts = new ArrayList<>();
-        seedMockAccounts();
+        this.accounts = Persistence.loadAccounts();
     }
 
     private void seedMockAccounts() {
@@ -56,6 +55,7 @@ public class Bank {
         boolean debited = from.debit(amount);
         if (debited) {
             to.credit(amount);
+            save();
             return true;
         }
 
@@ -63,10 +63,11 @@ public class Bank {
     }
 
     public void save() {
-        // Optional persistence hook
+        Persistence.saveAccounts(this.accounts);
     }
 
     public ArrayList<Account> getAccounts() {
         return accounts;
     }
 }
+

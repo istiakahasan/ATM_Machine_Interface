@@ -13,8 +13,7 @@ public class Bank {
      * Constructs a Bank instance and populates it with 3 seeded mock accounts.
      */
     public Bank() {
-        this.accounts = new ArrayList<>();
-        seedMockAccounts();
+        this.accounts = Persistence.loadAccounts();
     }
 
     /**
@@ -90,6 +89,7 @@ public class Bank {
         boolean debited = from.debit(amount);
         if (debited) {
             to.credit(amount);
+            save();
             return true;
         }
 
@@ -97,10 +97,10 @@ public class Bank {
     }
 
     /**
-     * Optional persistence hook to save accounts if persistence layer is used.
+     * Persists accounts to accounts.txt via Persistence helper.
      */
     public void save() {
-        // Optional persistence hook
+        Persistence.saveAccounts(this.accounts);
     }
 
     /**

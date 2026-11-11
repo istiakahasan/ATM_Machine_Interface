@@ -47,7 +47,7 @@ public class ATM {
             Account account = bank.findAccount(userId);
 
             if (account != null && account.validatePin(pin)) {
-                System.out.println("\nAuthentication Successful! Welcome, " + account.getUserId() + ". Login successful");
+                System.out.println("\nLogin successful! Welcome, " + account.getUserId() + ".");
                 this.currentAccount = account;
                 this.currentSessionHistory.clear();
                 showMenu();
@@ -136,6 +136,7 @@ public class ATM {
 
         boolean success = currentAccount.debit(amount);
         if (success) {
+            bank.save();
             Transaction tx = new Transaction("WITHDRAW", amount,
                     String.format("Cash withdrawal. New balance: $%.2f", currentAccount.getBalance()));
             currentSessionHistory.add(tx);
@@ -157,6 +158,7 @@ public class ATM {
 
         boolean success = currentAccount.credit(amount);
         if (success) {
+            bank.save();
             Transaction tx = new Transaction("DEPOSIT", amount,
                     String.format("Cash deposit. New balance: $%.2f", currentAccount.getBalance()));
             currentSessionHistory.add(tx);
