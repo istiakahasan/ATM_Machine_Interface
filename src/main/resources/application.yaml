@@ -1,0 +1,3 @@
+spring:
+  application:
+    name: ATM_Machine_Interface
