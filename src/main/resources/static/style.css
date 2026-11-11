@@ -410,6 +410,115 @@ label {
   box-shadow: 0 0 6px var(--success);
 }
 
+/* Recent Activity Panel (Main Menu) */
+.recent-activity-panel {
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-btn);
+  padding: 0.75rem 0.9rem;
+  margin-bottom: 1.15rem;
+}
+
+.recent-activity-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.recent-activity-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  transition: color var(--transition-fast);
+}
+
+.btn-link:hover {
+  color: var(--primary-hover);
+  text-decoration: underline;
+}
+
+.recent-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.recent-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.45rem 0.6rem;
+  background: rgba(30, 41, 59, 0.4);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  font-size: 0.8rem;
+  transition: background-color var(--transition-fast);
+}
+
+.recent-item:hover {
+  background: rgba(30, 41, 59, 0.75);
+}
+
+.recent-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.recent-icon {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.recent-type {
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.recent-time {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-left: 0.25rem;
+}
+
+.recent-amount {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.84rem;
+}
+
+.recent-empty, .recent-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.75rem 0;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.spinner-sm {
+  width: 0.9rem;
+  height: 0.9rem;
+  border-width: 2px;
+  margin-left: 0;
+  vertical-align: middle;
+}
+
 /* Menu Actions Grid (2x2) */
 .actions-grid {
   display: grid;

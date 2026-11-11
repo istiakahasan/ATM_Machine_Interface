@@ -87,6 +87,24 @@
           </span>
         </div>
 
+        <!-- Recent Activity Panel (Last 3 Transactions) -->
+        <div id="recent-activity-panel" class="recent-activity-panel">
+          <div class="recent-activity-header">
+            <span class="recent-activity-title">Recent Activity</span>
+            <button type="button" id="btn-view-all-history" class="btn-link">View All →</button>
+          </div>
+          <div id="recent-activity-loading" class="recent-loading hidden">
+            <span class="spinner spinner-sm" aria-hidden="true"></span>
+            <span>Loading...</span>
+          </div>
+          <div id="recent-activity-empty" class="recent-empty hidden">
+            <span>No recent transactions</span>
+          </div>
+          <ul id="recent-activity-list" class="recent-list" role="list">
+            <!-- Last 3 transaction items injected by JS -->
+          </ul>
+        </div>
+
         <div id="menu-message" class="message-banner hidden" role="alert" aria-live="polite"></div>
 
         <!-- 4 Action Grid Buttons -->

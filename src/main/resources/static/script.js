@@ -101,6 +101,13 @@ function initElements() {
     btnModalCancel: document.getElementById('btn-modal-cancel'),
     btnModalConfirm: document.getElementById('btn-modal-confirm'),
 
+    // Recent Activity Panel (Main Menu)
+    recentActivityPanel: document.getElementById('recent-activity-panel'),
+    recentActivityList: document.getElementById('recent-activity-list'),
+    recentActivityLoading: document.getElementById('recent-activity-loading'),
+    recentActivityEmpty: document.getElementById('recent-activity-empty'),
+    btnViewAllHistory: document.getElementById('btn-view-all-history'),
+
     // Generic Back Buttons
     backButtons: document.querySelectorAll('.btn-back')
   };
@@ -273,6 +280,11 @@ function showScreen(screenId) {
 
   // Update balance displays whenever switching screens
   syncBalanceDisplay();
+
+  // Refresh Recent Activity on Main Menu when returning or entering
+  if (screenId === 'screen-menu') {
+    loadRecentActivity();
+  }
 
   // Auto-focus primary input on the new screen
   setTimeout(() => {
@@ -906,6 +918,102 @@ function formatTimestamp(ts) {
 }
 
 /**
+ * Fetch and render the last 3 transactions for the main menu.
+ */
+async function loadRecentActivity() {
+  if (!state.currentUser || !elements.recentActivityList) return;
+
+  if (elements.recentActivityLoading) elements.recentActivityLoading.classList.remove('hidden');
+  if (elements.recentActivityEmpty) elements.recentActivityEmpty.classList.add('hidden');
+
+  try {
+    const historyData = await apiGetHistory(state.currentUser);
+    if (elements.recentActivityLoading) elements.recentActivityLoading.classList.add('hidden');
+
+    if (!Array.isArray(historyData) || historyData.length === 0) {
+      if (elements.recentActivityEmpty) elements.recentActivityEmpty.classList.remove('hidden');
+      elements.recentActivityList.innerHTML = '';
+      return;
+    }
+
+    if (elements.recentActivityEmpty) elements.recentActivityEmpty.classList.add('hidden');
+
+    // Display the last 3 transactions, reversed so the latest is on top
+    const recentItems = historyData.slice(-3).reverse();
+    renderRecentActivityItems(recentItems);
+  } catch (err) {
+    if (elements.recentActivityLoading) elements.recentActivityLoading.classList.add('hidden');
+    if (elements.recentActivityEmpty) {
+      elements.recentActivityEmpty.textContent = 'Activity unavailable';
+      elements.recentActivityEmpty.classList.remove('hidden');
+    }
+    console.warn('Could not load recent activity:', err);
+  }
+}
+
+/**
+ * Render items into the main menu recent activity list.
+ * @param {Array} items
+ */
+function renderRecentActivityItems(items) {
+  if (!elements.recentActivityList) return;
+  elements.recentActivityList.innerHTML = '';
+
+  items.forEach(item => {
+    const li = document.createElement('li');
+    li.className = 'recent-item';
+
+    const typeStr = (item.type || '').toUpperCase();
+    const isDeposit = typeStr.includes('DEPOSIT') || typeStr.includes('CREDIT') || typeStr.includes('TRANSFER_IN');
+
+    let icon = '💳';
+    let sign = '-';
+    let amountClass = 'amount-negative';
+
+    if (isDeposit) {
+      icon = '💰';
+      sign = '+';
+      amountClass = 'amount-positive';
+    } else if (typeStr.includes('TRANSFER')) {
+      icon = '🔁';
+    }
+
+    const typeLabel = formatTransactionType(typeStr);
+    const formattedAmount = `${sign}${formatMoney(item.amount)}`;
+    const timeLabel = formatCompactTimestamp(item.timestamp);
+
+    li.innerHTML = `
+      <div class="recent-left">
+        <span class="recent-icon" aria-hidden="true">${icon}</span>
+        <span class="recent-type">${escapeHtml(typeLabel)}</span>
+        <span class="recent-time">${escapeHtml(timeLabel)}</span>
+      </div>
+      <span class="recent-amount ${amountClass}">${escapeHtml(formattedAmount)}</span>
+    `;
+
+    elements.recentActivityList.appendChild(li);
+  });
+}
+
+/**
+ * Format timestamp for compact recent activity view.
+ * @param {any} ts
+ * @returns {string}
+ */
+function formatCompactTimestamp(ts) {
+  if (!ts) return '';
+  if (typeof ts === 'number' || (typeof ts === 'string' && !isNaN(Date.parse(ts)))) {
+    try {
+      const d = new Date(ts);
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch {
+      return String(ts).slice(-8);
+    }
+  }
+  return String(ts).slice(-8);
+}
+
+/**
  * Make transaction type string readable.
  * @param {string} rawType
  * @returns {string}
@@ -956,6 +1064,9 @@ function initApp() {
   }
   if (elements.btnNavHistory) {
     elements.btnNavHistory.addEventListener('click', loadHistoryScreen);
+  }
+  if (elements.btnViewAllHistory) {
+    elements.btnViewAllHistory.addEventListener('click', loadHistoryScreen);
   }
 
   // 4. Quick Amount Preset Buttons in Withdraw Screen
