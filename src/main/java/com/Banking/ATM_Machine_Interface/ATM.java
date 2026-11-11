@@ -74,12 +74,15 @@ public class ATM {
             System.out.print("Please enter your choice (1-5): ");
 
             String input = scanner.nextLine().trim();
-            int choice;
+            if (input.isEmpty()) {
+                continue; // Re-prompt on blank input
+            }
 
+            int choice;
             try {
                 choice = Integer.parseInt(input);
             } catch (NumberFormatException e) {
-                System.out.println("Invalid input. Please enter a valid number from 1 to 5.");
+                System.out.println("Invalid choice.");
                 continue;
             }
 
@@ -101,7 +104,7 @@ public class ATM {
                     sessionActive = false;
                     break;
                 default:
-                    System.out.println("Invalid choice. Please select an option between 1 and 5.");
+                    System.out.println("Invalid choice.");
                     break;
             }
         }
@@ -226,24 +229,20 @@ public class ATM {
             String line = scanner.nextLine().trim();
 
             if (line.isEmpty()) {
-                System.out.println("Error: Input cannot be blank. Please enter an amount.");
-                continue;
+                continue; // Re-prompt on blank input
             }
 
             try {
                 double amount = Double.parseDouble(line);
 
-                if (amount < 0.0) {
-                    System.out.println("Error: Amount cannot be negative. Please enter a positive amount.");
-                    continue;
-                } else if (amount == 0.0) {
-                    System.out.println("Error: Amount must be greater than zero.");
+                if (amount <= 0.0) {
+                    System.out.println("Amount must be positive.");
                     continue;
                 }
 
                 return amount;
             } catch (NumberFormatException e) {
-                System.out.println("Error: Invalid numeric input. Please enter a valid number (e.g., 50.00).");
+                System.out.println("Invalid amount. Try again.");
             }
         }
     }

@@ -67,7 +67,7 @@ public class ATM {
 
     /**
      * Displays the primary menu and processes user actions via switch-case.
-     * Quit option (choice 5) prints goodbye message and exits the loop cleanly.
+     * Hardened to re-prompt on blank input and print "Invalid choice." for invalid inputs.
      */
     public void showMenu() {
         boolean sessionActive = true;
@@ -85,12 +85,15 @@ public class ATM {
             System.out.print("Please enter your choice (1-5): ");
 
             String input = scanner.nextLine().trim();
-            int choice;
+            if (input.isEmpty()) {
+                continue; // Re-prompt on blank input
+            }
 
+            int choice;
             try {
                 choice = Integer.parseInt(input);
             } catch (NumberFormatException e) {
-                System.out.println("Invalid input. Please enter a valid number from 1 to 5.");
+                System.out.println("Invalid choice.");
                 continue;
             }
 
@@ -112,7 +115,7 @@ public class ATM {
                     sessionActive = false;
                     break;
                 default:
-                    System.out.println("Invalid choice. Please select an option between 1 and 5.");
+                    System.out.println("Invalid choice.");
                     break;
             }
         }
@@ -250,8 +253,11 @@ public class ATM {
     }
 
     /**
-     * Helper method to safely read and validate positive numeric currency inputs.
-     * Rejects non-numeric, zero, negative, and blank inputs with helpful messages.
+     * Hardened helper method to safely read and validate positive numeric currency inputs.
+     * - If user enters a non-numeric amount -> prints "Invalid amount. Try again." and re-prompts
+     * - If user enters a negative or zero amount -> rejects with "Amount must be positive."
+     * - If user enters blank input -> re-prompts
+     * - Never crashes or throws uncaught exceptions.
      */
     private double readValidAmount(String prompt) {
         while (true) {
@@ -259,24 +265,20 @@ public class ATM {
             String line = scanner.nextLine().trim();
 
             if (line.isEmpty()) {
-                System.out.println("Error: Input cannot be blank. Please enter an amount.");
-                continue;
+                continue; // Re-prompt on blank input
             }
 
             try {
                 double amount = Double.parseDouble(line);
 
-                if (amount < 0.0) {
-                    System.out.println("Error: Amount cannot be negative. Please enter a positive amount.");
-                    continue;
-                } else if (amount == 0.0) {
-                    System.out.println("Error: Amount must be greater than zero.");
+                if (amount <= 0.0) {
+                    System.out.println("Amount must be positive.");
                     continue;
                 }
 
                 return amount;
             } catch (NumberFormatException e) {
-                System.out.println("Error: Invalid numeric input. Please enter a valid number (e.g., 50.00).");
+                System.out.println("Invalid amount. Try again.");
             }
         }
     }
