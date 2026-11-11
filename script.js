@@ -23,69 +23,76 @@ const state = {
 // ==============================================================================
 // 3. DOM ELEMENT REFERENCES
 // ==============================================================================
-const elements = {
-  // Screens
-  screens: document.querySelectorAll('.screen'),
-  screenLogin: document.getElementById('screen-login'),
-  screenMenu: document.getElementById('screen-menu'),
-  screenWithdraw: document.getElementById('screen-withdraw'),
-  screenDeposit: document.getElementById('screen-deposit'),
-  screenTransfer: document.getElementById('screen-transfer'),
-  screenHistory: document.getElementById('screen-history'),
+let elements = {};
 
-  // Toast Container
-  toastContainer: document.getElementById('toast-container'),
+/**
+ * Initialize and cache all DOM references safely after DOM tree is parsed.
+ */
+function initElements() {
+  elements = {
+    // Screens
+    screens: document.querySelectorAll('.screen'),
+    screenLogin: document.getElementById('screen-login'),
+    screenMenu: document.getElementById('screen-menu'),
+    screenWithdraw: document.getElementById('screen-withdraw'),
+    screenDeposit: document.getElementById('screen-deposit'),
+    screenTransfer: document.getElementById('screen-transfer'),
+    screenHistory: document.getElementById('screen-history'),
 
-  // Login Screen
-  formLogin: document.getElementById('form-login'),
-  loginUserId: document.getElementById('login-user-id'),
-  loginPin: document.getElementById('login-pin'),
-  btnLoginSubmit: document.getElementById('btn-login-submit'),
-  loginError: document.getElementById('login-error'),
+    // Toast Container
+    toastContainer: document.getElementById('toast-container'),
 
-  // Menu Screen
-  menuUserId: document.getElementById('menu-user-id'),
-  menuBalanceValue: document.getElementById('menu-balance-value'),
-  menuMessage: document.getElementById('menu-message'),
-  btnNavWithdraw: document.getElementById('btn-nav-withdraw'),
-  btnNavDeposit: document.getElementById('btn-nav-deposit'),
-  btnNavTransfer: document.getElementById('btn-nav-transfer'),
-  btnNavHistory: document.getElementById('btn-nav-history'),
-  btnLogout: document.getElementById('btn-logout'),
+    // Login Screen
+    formLogin: document.getElementById('form-login'),
+    loginUserId: document.getElementById('login-user-id'),
+    loginPin: document.getElementById('login-pin'),
+    btnLoginSubmit: document.getElementById('btn-login-submit'),
+    loginError: document.getElementById('login-error'),
 
-  // Withdraw Screen
-  formWithdraw: document.getElementById('form-withdraw'),
-  withdrawAmount: document.getElementById('withdraw-amount'),
-  withdrawCurrentBalance: document.getElementById('withdraw-current-balance'),
-  withdrawError: document.getElementById('withdraw-error'),
-  btnWithdrawSubmit: document.getElementById('btn-withdraw-submit'),
-  quickAmountBtns: document.querySelectorAll('.btn-quick-amount'),
+    // Menu Screen
+    menuUserId: document.getElementById('menu-user-id'),
+    menuBalanceValue: document.getElementById('menu-balance-value'),
+    menuMessage: document.getElementById('menu-message'),
+    btnNavWithdraw: document.getElementById('btn-nav-withdraw'),
+    btnNavDeposit: document.getElementById('btn-nav-deposit'),
+    btnNavTransfer: document.getElementById('btn-nav-transfer'),
+    btnNavHistory: document.getElementById('btn-nav-history'),
+    btnLogout: document.getElementById('btn-logout'),
 
-  // Deposit Screen
-  formDeposit: document.getElementById('form-deposit'),
-  depositAmount: document.getElementById('deposit-amount'),
-  depositCurrentBalance: document.getElementById('deposit-current-balance'),
-  depositError: document.getElementById('deposit-error'),
-  btnDepositSubmit: document.getElementById('btn-deposit-submit'),
+    // Withdraw Screen
+    formWithdraw: document.getElementById('form-withdraw'),
+    withdrawAmount: document.getElementById('withdraw-amount'),
+    withdrawCurrentBalance: document.getElementById('withdraw-current-balance'),
+    withdrawError: document.getElementById('withdraw-error'),
+    btnWithdrawSubmit: document.getElementById('btn-withdraw-submit'),
+    quickAmountBtns: document.querySelectorAll('.btn-quick-amount'),
 
-  // Transfer Screen
-  formTransfer: document.getElementById('form-transfer'),
-  transferRecipient: document.getElementById('transfer-recipient'),
-  transferAmount: document.getElementById('transfer-amount'),
-  transferCurrentBalance: document.getElementById('transfer-current-balance'),
-  transferError: document.getElementById('transfer-error'),
-  transferSelfWarning: document.getElementById('transfer-self-warning'),
-  btnTransferSubmit: document.getElementById('btn-transfer-submit'),
+    // Deposit Screen
+    formDeposit: document.getElementById('form-deposit'),
+    depositAmount: document.getElementById('deposit-amount'),
+    depositCurrentBalance: document.getElementById('deposit-current-balance'),
+    depositError: document.getElementById('deposit-error'),
+    btnDepositSubmit: document.getElementById('btn-deposit-submit'),
 
-  // History Screen
-  historyCurrentBalance: document.getElementById('history-current-balance'),
-  historyLoading: document.getElementById('history-loading'),
-  historyEmpty: document.getElementById('history-empty'),
-  historyList: document.getElementById('history-list'),
+    // Transfer Screen
+    formTransfer: document.getElementById('form-transfer'),
+    transferRecipient: document.getElementById('transfer-recipient'),
+    transferAmount: document.getElementById('transfer-amount'),
+    transferCurrentBalance: document.getElementById('transfer-current-balance'),
+    transferError: document.getElementById('transfer-error'),
+    transferSelfWarning: document.getElementById('transfer-self-warning'),
+    btnTransferSubmit: document.getElementById('btn-transfer-submit'),
 
-  // Generic Back Buttons
-  backButtons: document.querySelectorAll('.btn-back')
-};
+    // History Screen
+    historyCurrentBalance: document.getElementById('history-current-balance'),
+    historyLoading: document.getElementById('history-loading'),
+    historyEmpty: document.getElementById('history-empty'),
+    historyList: document.getElementById('history-list'),
+
+    // Generic Back Buttons
+    backButtons: document.querySelectorAll('.btn-back')
+  };
+}
 
 // ==============================================================================
 // 4. UTILITY FUNCTIONS
@@ -98,7 +105,7 @@ const elements = {
  */
 function formatMoney(amount) {
   const num = Number(amount) || 0;
-  return '$' + num.toLocaleString('en-US', {
+  return '$' + Math.abs(num).toLocaleString('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   });
@@ -171,7 +178,7 @@ function toast(message, type = 'info', duration = 3000) {
  * @returns {string}
  */
 function escapeHtml(str) {
-  if (typeof str !== 'string') return String(str || '');
+  if (typeof str !== 'string') return String(str ?? '');
   return str.replace(/[&<>'"]/g, tag => ({
     '&': '&amp;',
     '<': '&lt;',
@@ -182,10 +189,57 @@ function escapeHtml(str) {
 }
 
 /**
+ * Robust check for cross-browser network fetch failures.
+ * @param {Error} err
+ * @returns {boolean}
+ */
+function isNetworkError(err) {
+  if (!err) return false;
+  const msg = (err.message || '').toLowerCase();
+  return (
+    err.name === 'TypeError' ||
+    msg.includes('failed to fetch') ||
+    msg.includes('networkerror') ||
+    msg.includes('load failed') ||
+    msg.includes('network error')
+  );
+}
+
+/**
+ * Ensure exact case-sensitive 'Insufficient Funds' requirement when applicable.
+ * @param {string} msg
+ * @returns {string}
+ */
+function normalizeErrorMessage(msg) {
+  if (!msg) return 'Transaction failed.';
+  if (/insufficient\s*funds/i.test(msg)) {
+    return 'Insufficient Funds';
+  }
+  return msg;
+}
+
+/**
+ * Safely parse HTTP response body as JSON or text fallback.
+ * @param {Response} response
+ * @returns {Promise<any>}
+ */
+async function parseResponse(response) {
+  const text = await response.text().catch(() => '');
+  if (!text) return {};
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { message: text };
+  }
+}
+
+/**
  * Switch active visible screen and auto-focus first input.
  * @param {string} screenId - Target screen ID
  */
 function showScreen(screenId) {
+  if (!elements.screens) return;
+
   elements.screens.forEach(screen => {
     if (screen.id === screenId) {
       screen.classList.add('active');
@@ -273,9 +327,10 @@ async function apiLogin(userId, pin) {
     body: JSON.stringify({ userId, pin })
   });
 
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    throw new Error(data.message || 'Login failed. Please check your credentials.');
+  const data = await parseResponse(response);
+  if (!response.ok || data.ok === false) {
+    const errorMsg = data.message || data.error || 'Login failed. Please check your credentials.';
+    throw new Error(errorMsg);
   }
   return data;
 }
@@ -292,7 +347,6 @@ async function apiLogout(userId) {
       body: JSON.stringify({ userId })
     });
   } catch (err) {
-    // Non-blocking logout network exception
     console.warn('Logout API notification warning:', err);
   }
 }
@@ -307,9 +361,9 @@ async function apiGetBalance(userId) {
     headers: { 'Accept': 'application/json' }
   });
 
-  const data = await response.json().catch(() => ({}));
+  const data = await parseResponse(response);
   if (!response.ok) {
-    throw new Error(data.message || 'Failed to fetch current balance.');
+    throw new Error(data.message || data.error || 'Failed to fetch current balance.');
   }
   return data;
 }
@@ -325,10 +379,10 @@ async function apiWithdraw(userId, amount) {
     body: JSON.stringify({ userId, amount: Number(amount) })
   });
 
-  const data = await response.json().catch(() => ({}));
+  const data = await parseResponse(response);
   if (!response.ok || data.ok === false) {
-    const errorMsg = data.message || 'Withdrawal failed.';
-    throw new Error(errorMsg);
+    const errorMsg = data.message || data.error || (typeof data === 'string' ? data : '') || 'Withdrawal failed.';
+    throw new Error(normalizeErrorMessage(errorMsg));
   }
   return data;
 }
@@ -344,9 +398,9 @@ async function apiDeposit(userId, amount) {
     body: JSON.stringify({ userId, amount: Number(amount) })
   });
 
-  const data = await response.json().catch(() => ({}));
+  const data = await parseResponse(response);
   if (!response.ok || data.ok === false) {
-    const errorMsg = data.message || 'Deposit failed.';
+    const errorMsg = data.message || data.error || (typeof data === 'string' ? data : '') || 'Deposit failed.';
     throw new Error(errorMsg);
   }
   return data;
@@ -367,10 +421,10 @@ async function apiTransfer(fromUser, toUser, amount) {
     })
   });
 
-  const data = await response.json().catch(() => ({}));
+  const data = await parseResponse(response);
   if (!response.ok || data.ok === false) {
-    const errorMsg = data.message || 'Transfer failed.';
-    throw new Error(errorMsg);
+    const errorMsg = data.message || data.error || (typeof data === 'string' ? data : '') || 'Transfer failed.';
+    throw new Error(normalizeErrorMessage(errorMsg));
   }
   return data;
 }
@@ -385,16 +439,46 @@ async function apiGetHistory(userId) {
     headers: { 'Accept': 'application/json' }
   });
 
+  const data = await parseResponse(response);
   if (!response.ok) {
-    const data = await response.json().catch(() => ({}));
-    throw new Error(data.message || 'Failed to load transaction history.');
+    throw new Error(data.message || data.error || 'Failed to load transaction history.');
   }
-  return await response.json();
+  return Array.isArray(data) ? data : (data.history || []);
 }
 
 // ==============================================================================
 // 6. ACTION HANDLERS & FLOW CONTROLLERS
 // ==============================================================================
+
+/**
+ * Refresh Balance from backend with optimistic fallback
+ * @param {number} [fallbackDelta]
+ * @param {'add'|'subtract'} [deltaType]
+ */
+async function refreshBalance(fallbackDelta = 0, deltaType = null) {
+  if (!state.currentUser) return;
+  try {
+    const res = await apiGetBalance(state.currentUser);
+    const bal = typeof res === 'number' ? res : (typeof res.balance === 'number' ? res.balance : parseFloat(res.balance));
+    if (!isNaN(bal)) {
+      state.currentBalance = bal;
+      syncBalanceDisplay();
+      return;
+    }
+  } catch (err) {
+    console.warn('Could not sync latest balance from GET /api/balance/:id:', err);
+  }
+
+  // Fallback optimistic balance adjustment if server GET /api/balance/:id is absent
+  if (fallbackDelta > 0 && deltaType) {
+    if (deltaType === 'add') {
+      state.currentBalance += fallbackDelta;
+    } else if (deltaType === 'subtract') {
+      state.currentBalance = Math.max(0, state.currentBalance - fallbackDelta);
+    }
+    syncBalanceDisplay();
+  }
+}
 
 /**
  * Handle Login Form Submission
@@ -424,7 +508,9 @@ async function handleLogin(e) {
   try {
     const result = await apiLogin(userId, pin);
     state.currentUser = userId;
-    state.currentBalance = typeof result.balance === 'number' ? result.balance : parseFloat(result.balance || 0);
+
+    const rawBal = typeof result === 'number' ? result : result.balance;
+    state.currentBalance = typeof rawBal === 'number' ? rawBal : parseFloat(rawBal || 0);
 
     syncBalanceDisplay();
     toast(`Welcome, ${userId}!`, 'success');
@@ -433,7 +519,7 @@ async function handleLogin(e) {
     // Clear sensitive PIN from login input
     elements.loginPin.value = '';
   } catch (err) {
-    if (err.message && err.message.toLowerCase().includes('failed to fetch')) {
+    if (isNetworkError(err)) {
       setMsg(elements.loginError, 'Server unreachable', true);
       toast('Server unreachable', 'error');
     } else {
@@ -460,29 +546,13 @@ async function handleLogout() {
     // Clear user state & sensitive fields
     state.currentUser = null;
     state.currentBalance = 0.0;
-    elements.loginPin.value = '';
-    elements.loginUserId.value = '';
+    if (elements.loginPin) elements.loginPin.value = '';
+    if (elements.loginUserId) elements.loginUserId.value = '';
     setMsg(elements.loginError, '');
 
     setButtonLoading(elements.btnLogout, false);
     toast('Logged out successfully.', 'info');
     showScreen('screen-login');
-  }
-}
-
-/**
- * Refresh Balance from backend
- */
-async function refreshBalance() {
-  if (!state.currentUser) return;
-  try {
-    const res = await apiGetBalance(state.currentUser);
-    if (typeof res.balance === 'number') {
-      state.currentBalance = res.balance;
-      syncBalanceDisplay();
-    }
-  } catch (err) {
-    console.warn('Could not sync latest balance from server:', err);
   }
 }
 
@@ -502,35 +572,30 @@ async function handleWithdraw(e) {
     return;
   }
 
-  // Quick client balance check
-  if (amount > state.currentBalance) {
-    setMsg(elements.withdrawError, 'Insufficient Funds', true);
-    toast('Insufficient Funds', 'error');
-    return;
-  }
-
   setButtonLoading(elements.btnWithdrawSubmit, true, 'Processing...');
 
   try {
     const res = await apiWithdraw(state.currentUser, amount);
-    toast(res.message || `Withdrew ${formatMoney(amount)} successfully!`, 'success');
 
     // Update balance
-    await refreshBalance();
+    if (typeof res.balance === 'number') {
+      state.currentBalance = res.balance;
+      syncBalanceDisplay();
+    } else {
+      await refreshBalance(amount, 'subtract');
+    }
+
+    toast(res.message || `Withdrew ${formatMoney(amount)} successfully!`, 'success');
     elements.withdrawAmount.value = '';
     showScreen('screen-menu');
   } catch (err) {
-    const rawMsg = err.message || '';
-    if (rawMsg.toLowerCase().includes('failed to fetch')) {
+    if (isNetworkError(err)) {
       setMsg(elements.withdrawError, 'Server unreachable', true);
       toast('Server unreachable', 'error');
-    } else if (rawMsg.toLowerCase().includes('insufficient funds')) {
-      // Must match EXACT case requirement
-      setMsg(elements.withdrawError, 'Insufficient Funds', true);
-      toast('Insufficient Funds', 'error');
     } else {
-      setMsg(elements.withdrawError, rawMsg, true);
-      toast(rawMsg, 'error');
+      const displayMsg = normalizeErrorMessage(err.message);
+      setMsg(elements.withdrawError, displayMsg, true);
+      toast(displayMsg, 'error');
     }
   } finally {
     setButtonLoading(elements.btnWithdrawSubmit, false);
@@ -557,20 +622,25 @@ async function handleDeposit(e) {
 
   try {
     const res = await apiDeposit(state.currentUser, amount);
-    toast(res.message || `Deposited ${formatMoney(amount)} successfully!`, 'success');
 
     // Update balance
-    await refreshBalance();
+    if (typeof res.balance === 'number') {
+      state.currentBalance = res.balance;
+      syncBalanceDisplay();
+    } else {
+      await refreshBalance(amount, 'add');
+    }
+
+    toast(res.message || `Deposited ${formatMoney(amount)} successfully!`, 'success');
     elements.depositAmount.value = '';
     showScreen('screen-menu');
   } catch (err) {
-    const rawMsg = err.message || '';
-    if (rawMsg.toLowerCase().includes('failed to fetch')) {
+    if (isNetworkError(err)) {
       setMsg(elements.depositError, 'Server unreachable', true);
       toast('Server unreachable', 'error');
     } else {
-      setMsg(elements.depositError, rawMsg, true);
-      toast(rawMsg, 'error');
+      setMsg(elements.depositError, err.message || 'Deposit failed.', true);
+      toast(err.message || 'Deposit failed.', 'error');
     }
   } finally {
     setButtonLoading(elements.btnDepositSubmit, false);
@@ -595,7 +665,7 @@ async function handleTransfer(e) {
   }
 
   if (recipient.toLowerCase() === (state.currentUser || '').toLowerCase()) {
-    setMsg(elements.transferError, 'Cannot transfer funds to yourself.', true);
+    setMsg(elements.transferError, 'Cannot transfer to yourself', true);
     elements.transferRecipient.focus();
     return;
   }
@@ -606,34 +676,31 @@ async function handleTransfer(e) {
     return;
   }
 
-  if (amount > state.currentBalance) {
-    setMsg(elements.transferError, 'Insufficient Funds', true);
-    toast('Insufficient Funds', 'error');
-    return;
-  }
-
   setButtonLoading(elements.btnTransferSubmit, true, 'Transferring...');
 
   try {
     const res = await apiTransfer(state.currentUser, recipient, amount);
-    toast(res.message || `Transferred ${formatMoney(amount)} to ${recipient}!`, 'success');
 
     // Update balance
-    await refreshBalance();
+    if (typeof res.balance === 'number') {
+      state.currentBalance = res.balance;
+      syncBalanceDisplay();
+    } else {
+      await refreshBalance(amount, 'subtract');
+    }
+
+    toast(res.message || `Transferred ${formatMoney(amount)} to ${recipient}!`, 'success');
     elements.transferRecipient.value = '';
     elements.transferAmount.value = '';
     showScreen('screen-menu');
   } catch (err) {
-    const rawMsg = err.message || '';
-    if (rawMsg.toLowerCase().includes('failed to fetch')) {
+    if (isNetworkError(err)) {
       setMsg(elements.transferError, 'Server unreachable', true);
       toast('Server unreachable', 'error');
-    } else if (rawMsg.toLowerCase().includes('insufficient funds')) {
-      setMsg(elements.transferError, 'Insufficient Funds', true);
-      toast('Insufficient Funds', 'error');
     } else {
-      setMsg(elements.transferError, rawMsg, true);
-      toast(rawMsg, 'error');
+      const displayMsg = normalizeErrorMessage(err.message);
+      setMsg(elements.transferError, displayMsg, true);
+      toast(displayMsg, 'error');
     }
   } finally {
     setButtonLoading(elements.btnTransferSubmit, false);
@@ -661,7 +728,7 @@ async function loadHistoryScreen() {
     renderHistoryItems(historyData);
   } catch (err) {
     elements.historyLoading.classList.add('hidden');
-    if (err.message && err.message.toLowerCase().includes('failed to fetch')) {
+    if (isNetworkError(err)) {
       toast('Server unreachable', 'error');
     } else {
       toast(err.message || 'Failed to load transaction history.', 'error');
@@ -702,7 +769,7 @@ function renderHistoryItems(items) {
     const typeLabel = formatTransactionType(typeStr);
     const formattedAmount = `${sign}${formatMoney(item.amount)}`;
     const details = item.details || item.description || 'Standard transaction';
-    const timestamp = item.timestamp || 'Just now';
+    const timestamp = formatTimestamp(item.timestamp);
 
     li.innerHTML = `
       <div class="history-left">
@@ -719,6 +786,24 @@ function renderHistoryItems(items) {
 
     elements.historyList.appendChild(li);
   });
+}
+
+/**
+ * Format raw timestamp into clean human-readable date and time.
+ * @param {any} ts
+ * @returns {string}
+ */
+function formatTimestamp(ts) {
+  if (!ts) return 'Just now';
+  if (typeof ts === 'number' || (typeof ts === 'string' && !isNaN(Date.parse(ts)))) {
+    try {
+      const d = new Date(ts);
+      return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch {
+      return String(ts);
+    }
+  }
+  return String(ts);
 }
 
 /**
@@ -747,7 +832,9 @@ function formatTransactionType(rawType) {
 // 7. EVENT LISTENERS & INITIALIZATION
 // ==============================================================================
 
-document.addEventListener('DOMContentLoaded', () => {
+function initApp() {
+  initElements();
+
   // 1. Login Form Submit
   if (elements.formLogin) {
     elements.formLogin.addEventListener('submit', handleLogin);
@@ -773,15 +860,17 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // 4. Quick Amount Preset Buttons in Withdraw Screen
-  elements.quickAmountBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const amt = btn.getAttribute('data-amount');
-      if (amt && elements.withdrawAmount) {
-        elements.withdrawAmount.value = amt;
-        elements.withdrawAmount.focus();
-      }
+  if (elements.quickAmountBtns) {
+    elements.quickAmountBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const amt = btn.getAttribute('data-amount');
+        if (amt && elements.withdrawAmount) {
+          elements.withdrawAmount.value = amt;
+          elements.withdrawAmount.focus();
+        }
+      });
     });
-  });
+  }
 
   // 5. Withdrawal Form Submit
   if (elements.formWithdraw) {
@@ -809,12 +898,21 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // 8. Back Buttons across all sub-screens
-  elements.backButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      showScreen('screen-menu');
+  if (elements.backButtons) {
+    elements.backButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        showScreen('screen-menu');
+      });
     });
-  });
+  }
 
   // 9. Initial Screen Setup
   showScreen('screen-login');
-});
+}
+
+// Ensure execution whether DOMContentLoaded has already fired or is pending
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}
