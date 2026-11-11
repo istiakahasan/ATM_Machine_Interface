@@ -124,10 +124,7 @@ public class ATM {
         System.out.println("\n--- WITHDRAW CASH ---");
         System.out.printf("Current Balance: $%.2f%n", currentAccount.getBalance());
 
-        double amount = readPositiveAmount("Enter amount to withdraw: $");
-        if (amount <= 0.0) {
-            return;
-        }
+        double amount = readValidAmount("Enter amount to withdraw: $");
 
         // Rule 4 & 5: Check balance BEFORE withdrawal and display EXACT phrase
         if (currentAccount.getBalance() < amount) {
@@ -154,10 +151,7 @@ public class ATM {
         System.out.println("\n--- DEPOSIT CASH ---");
         System.out.printf("Current Balance: $%.2f%n", currentAccount.getBalance());
 
-        double amount = readPositiveAmount("Enter amount to deposit: $");
-        if (amount <= 0.0) {
-            return;
-        }
+        double amount = readValidAmount("Enter amount to deposit: $");
 
         boolean success = currentAccount.credit(amount);
         if (success) {
@@ -197,10 +191,7 @@ public class ATM {
             return;
         }
 
-        double amount = readPositiveAmount("Enter amount to transfer: $");
-        if (amount <= 0.0) {
-            return;
-        }
+        double amount = readValidAmount("Enter amount to transfer: $");
 
         // Rule 4 & 5: Check balance BEFORE transfer and display EXACT phrase
         if (currentAccount.getBalance() < amount) {
@@ -242,28 +233,34 @@ public class ATM {
     }
 
     /**
-     * Helper method to safely read and validate positive numeric currency inputs.
-     * Gracefully handles non-numeric strings and zero or negative amounts.
+     * Safely reads and validates numeric currency inputs from the console.
+     * Explicitly rejects non-numeric inputs, negative amounts, zero amounts,
+     * and blank strings with user-friendly messages without crashing.
      *
      * @param prompt The prompt to display to the user
-     * @return A valid positive double value
+     * @return A valid strictly positive double value (> 0.0)
      */
-    private double readPositiveAmount(String prompt) {
+    private double readValidAmount(String prompt) {
         while (true) {
             System.out.print(prompt);
             String line = scanner.nextLine().trim();
 
             if (line.isEmpty()) {
-                System.out.println("Error: Input cannot be empty. Please enter an amount.");
+                System.out.println("Error: Input cannot be blank. Please enter an amount.");
                 continue;
             }
 
             try {
                 double amount = Double.parseDouble(line);
-                if (amount <= 0.0) {
+
+                if (amount < 0.0) {
+                    System.out.println("Error: Amount cannot be negative. Please enter a positive amount.");
+                    continue;
+                } else if (amount == 0.0) {
                     System.out.println("Error: Amount must be greater than zero.");
                     continue;
                 }
+
                 return amount;
             } catch (NumberFormatException e) {
                 System.out.println("Error: Invalid numeric input. Please enter a valid number (e.g., 50.00).");
